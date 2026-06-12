@@ -1,0 +1,60 @@
+You are writing the root Terraform module for a new project that composes
+pre-built modules. The module sources are already copied into the project at
+./modules/<id> — you only write the root files that call and wire them.
+
+TASK
+{task}
+
+FRAMEWORK CONVENTIONS
+- Every module takes the governance inputs: prefix, environment, owner,
+  cost_center (required), plus optional additional_tags and name_suffix.
+  Declare them once as root variables and pass them to every module block.
+- Modules NEVER reference each other. All wiring is done here in the root:
+  pass one module's output as another module's input
+  (e.g. vpc_id = module.core_network.network_id).
+- Pin providers exactly as the manifests specify, in a terraform block with
+  required_version and required_providers.
+
+MODULE INTERFACES (authoritative — use ONLY inputs and outputs listed here;
+do not invent attribute names)
+{manifests}
+
+WIRING PATTERN EXAMPLE
+module "core_network" {
+  source = "./modules/aws/core-network"
+
+  prefix      = var.prefix
+  environment = var.environment
+  owner       = var.owner
+  cost_center = var.cost_center
+
+  region         = var.region
+  vpc_cidr_block = var.vpc_cidr_block
+  subnets = {
+    app-a = { cidr_block = cidrsubnet(var.vpc_cidr_block, 8, 1), availability_zone = "${var.region}a", tier = "private" }
+  }
+}
+
+module "private_dns" {
+  source = "./modules/aws/dns/private-zones"
+  # governance inputs as above, then wire output -> input:
+  # vpc_id = module.core_network.network_id
+  ...
+}
+
+REQUIREMENTS
+- Write these files: main.tf (terraform block, provider blocks, module blocks),
+  variables.tf (all root variables with types and descriptions), outputs.tf
+  (re-export the useful module outputs).
+- Every input marked "required": true in a manifest MUST be set in its module
+  block — either wired from another module's output, derived from a root
+  variable, or given a sensible literal.
+- Output each file between exact delimiters, no markdown fences:
+
+=== FILE: main.tf ===
+<file content>
+=== FILE: variables.tf ===
+<file content>
+=== FILE: outputs.tf ===
+<file content>
+=== END ===

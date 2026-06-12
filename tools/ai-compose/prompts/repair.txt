@@ -1,0 +1,21 @@
+The Terraform files you wrote failed validation. Fix them.
+
+VALIDATION ERROR
+{error}
+
+CURRENT FILES
+{files}
+
+MODULE INTERFACES (authoritative — use ONLY inputs and outputs listed here)
+{manifests}
+
+Re-output ALL root files, complete and corrected, in the same delimiter
+format, no markdown fences:
+
+=== FILE: main.tf ===
+<file content>
+=== FILE: variables.tf ===
+<file content>
+=== FILE: outputs.tf ===
+<file content>
+=== END ===

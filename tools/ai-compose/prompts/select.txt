@@ -1,0 +1,17 @@
+You are selecting Terraform modules from a multi-cloud framework catalog.
+
+TASK
+{task}
+
+CATALOG (id — summary | requires: ... | outputs: ...)
+{catalog}
+
+RULES
+- Select ONLY modules needed for the task. Fewer is better.
+- Modules are independently invocable; cross-module wiring happens later in a
+  root module, so do not select a module just because another "depends" on it —
+  select it only if the task needs the capability it deploys.
+- Use exact ids from the catalog.
+
+Respond with ONLY a JSON array of module ids, nothing else.
+Example: ["aws/core-network", "aws/dns/private-zones"]
