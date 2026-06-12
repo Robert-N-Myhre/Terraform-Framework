@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# Terraform
+# ---------------------------------------------------------------------------
+
+# Local .terraform directories (provider plugins, module cache)
+**/.terraform/*
+
+# Dependency lock files: ignored for reusable modules, but committed for the
+# example root configurations so their provider versions are reproducible.
+.terraform.lock.hcl
+!examples/**/.terraform.lock.hcl
+
+# State files — NEVER commit. They contain sensitive values in plaintext
+# (VPN pre-shared keys, BGP auth keys, certificate private keys handled by the
+# hybrid-connectivity and load-balancer modules). See docs/state-management.md.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log
+crash.log
+crash.*.log
+
+# Variable files that commonly hold secrets / environment-specific values.
+# Commit example/sanitized versions as *.tfvars.example instead.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Saved plan output (may contain sensitive values)
+*.tfplan
+*.tfplan.*
+
+# CLI config that may hold credentials
+.terraformrc
+terraform.rc
+
+# ---------------------------------------------------------------------------
+# Cloud credentials / provider auth — never commit
+# ---------------------------------------------------------------------------
+*.pem
+*.key
+.oci/
+oci_api_key*.pem
+azure.auth
+gcp-credentials*.json
+*-service-account*.json
+.aws/
+
+# ---------------------------------------------------------------------------
+# Editor / OS noise
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
