@@ -1,0 +1,167 @@
+{
+  "id": "aws/firewall/network-firewall",
+  "path": "modules/aws/firewall/network-firewall",
+  "cloud": "aws",
+  "domain": "firewall",
+  "name": "network-firewall",
+  "title": "AWS Firewall \u2014 AWS Network Firewall",
+  "summary": "Creates an AWS Network Firewall with stateless and stateful (Suricata-compatible, STRICT_ORDER) rule groups, a firewall policy, endpoint placement across dedicated subnets, optional CloudWatch logging, and deletion protection on by default.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "vpc_id",
+        "type": "string",
+        "description": "ID of the VPC in which the firewall endpoints are created. Supplied by ID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "firewall_subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet IDs (one per AZ recommended) dedicated to AWS Network Firewall endpoints. Must not host other workloads.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "stateless_rule_groups",
+        "type": "map(object({ capacity = number priority = number rules = map(object({ priority = number actions = list(string) source_cidrs = optional(list(string), [\"0.0.0.0/0\"]) destination_cidrs = optional(list(string), [\"0.0.0.0/0\"]) protocols = optional(list(number), []) source_port_from = optional(number) source_port_to = optional(number) destination_port_from = optional(number) destination_port_to = optional(number) })) }))",
+        "description": "Stateless rule groups keyed by logical name. capacity is the AWS rule-group capacity reservation; priority orders groups inside the policy.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "stateful_rule_groups",
+        "type": "map(object({ capacity = number priority = number rules_string = string }))",
+        "description": "Stateful rule groups keyed by logical name, expressed as Suricata-compatible rules_string. Policy uses STRICT_ORDER evaluation; priority orders groups.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "stateless_default_actions",
+        "type": "list(string)",
+        "description": "Default actions for full packets that match no stateless rule (e.g., [\\\"aws:forward_to_sfe\\\"] to hand off to the stateful engine).",
+        "required": false,
+        "default": "[\"aws:forward_to_sfe\"]"
+      },
+      {
+        "name": "stateless_fragment_default_actions",
+        "type": "list(string)",
+        "description": "Default actions for fragmented packets that match no stateless rule.",
+        "required": false,
+        "default": "[\"aws:forward_to_sfe\"]"
+      },
+      {
+        "name": "stateful_default_actions",
+        "type": "list(string)",
+        "description": "Default actions for the stateful engine under STRICT_ORDER (e.g., [\\\"aws:drop_strict\\\"] for default-deny, [\\\"aws:alert_established\\\"] for monitor mode).",
+        "required": false,
+        "default": "[\"aws:drop_strict\", \"aws:alert_strict\"]"
+      },
+      {
+        "name": "delete_protection",
+        "type": "bool",
+        "description": "Enable deletion protection on the firewall (governance/resource-locks). Must be set false and applied before the firewall can be destroyed.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "subnet_change_protection",
+        "type": "bool",
+        "description": "Prevent endpoint subnet changes on the firewall.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "policy_change_protection",
+        "type": "bool",
+        "description": "Prevent the firewall policy association from being changed.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "enable_logging",
+        "type": "bool",
+        "description": "Whether to send ALERT and FLOW logs to module-managed CloudWatch log groups.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "log_retention_days",
+        "type": "number",
+        "description": "Retention period in days for firewall CloudWatch log groups.",
+        "required": false,
+        "default": "30"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map with single key 'firewall' to the AWS Network Firewall ARN (the provider uses ARN as ID)."
+    },
+    {
+      "name": "firewall_policy_arn",
+      "description": "ARN of the firewall policy."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of 'stateless|stateful/<group-key>' to rule group ARN."
+    },
+    {
+      "name": "endpoint_ids",
+      "description": "Map of availability zone to firewall VPC endpoint ID. Use these as route targets to steer traffic through the firewall."
+    },
+    {
+      "name": "log_group_names",
+      "description": "Names of the ALERT and FLOW CloudWatch log groups, or empty map when logging is disabled."
+    }
+  ]
+}

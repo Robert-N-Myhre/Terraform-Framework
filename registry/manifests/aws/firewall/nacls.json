@@ -1,0 +1,93 @@
+{
+  "id": "aws/firewall/nacls",
+  "path": "modules/aws/firewall/nacls",
+  "cloud": "aws",
+  "domain": "firewall",
+  "name": "nacls",
+  "title": "AWS Firewall \u2014 Network ACLs",
+  "summary": "Creates stateless network ACLs with numbered allow/deny rules and optional subnet associations.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "vpc_id",
+        "type": "string",
+        "description": "ID of the VPC in which to create the network ACLs. Supplied by ID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "network_acls",
+        "type": "map(object({ subnet_ids = optional(list(string), []) ingress_rules = optional(map(object({ rule_number = number protocol = string action = string cidr_block = optional(string) from_port = optional(number) to_port = optional(number) icmp_type = optional(number) icmp_code = optional(number) })), {}) egress_rules = optional(map(object({ rule_number = number protocol = string action = string cidr_block = optional(string) from_port = optional(number) to_port = optional(number) icmp_type = optional(number) icmp_code = optional(number) })), {}) }))",
+        "description": "Map of network ACLs keyed by logical name. Each ACL carries ingress and egress rule maps and an optional list of subnet IDs to associate. NACLs are STATELESS \u2014 return traffic must be explicitly allowed (typically an ephemeral-port range rule 1024-65535). Rule numbers must be unique per direction within an ACL; lower numbers evaluate first.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map of logical NACL name to network ACL ID."
+    },
+    {
+      "name": "firewall_arns",
+      "description": "Map of logical NACL name to network ACL ARN."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of 'ingress|egress/<acl-key>/<rule-key>' to NACL rule ID."
+    },
+    {
+      "name": "subnet_association_ids",
+      "description": "Map of '<acl-key>/<subnet-id>' to NACL association ID."
+    }
+  ]
+}

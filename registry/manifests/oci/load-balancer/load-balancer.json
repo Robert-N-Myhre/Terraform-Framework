@@ -1,0 +1,141 @@
+{
+  "id": "oci/load-balancer/load-balancer",
+  "path": "modules/oci/load-balancer/load-balancer",
+  "cloud": "oci",
+  "domain": "load-balancer",
+  "name": "load-balancer",
+  "title": "OCI Load Balancer \u2014 Load Balancer",
+  "summary": "Creates a flexible-shape OCI Load Balancer (public or private) with backend sets, health checkers, optional static backend registration, session persistence, TLS certificates, and HTTP/TCP listeners.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the load balancer.",
+        "required": true
+      },
+      {
+        "name": "subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet OCIDs for the LB. One regional subnet is typical; two AD-specific subnets for AD-redundant deployments.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "is_private",
+        "type": "bool",
+        "description": "Whether the LB is private (no public IP).",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "shape_min_mbps",
+        "type": "number",
+        "description": "Minimum bandwidth of the flexible shape in Mbps.",
+        "required": false,
+        "default": "10"
+      },
+      {
+        "name": "shape_max_mbps",
+        "type": "number",
+        "description": "Maximum bandwidth of the flexible shape in Mbps.",
+        "required": false,
+        "default": "100"
+      },
+      {
+        "name": "nsg_ids",
+        "type": "list(string)",
+        "description": "Network security group OCIDs attached to the LB.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "backend_sets",
+        "type": "map(object({ policy = optional(string, \"ROUND_ROBIN\") health_checker = object({ protocol = string port = number url_path = optional(string, \"/\") return_code = optional(number, 200) interval_ms = optional(number, 10000) timeout_ms = optional(number, 3000) retries = optional(number, 3) }) session_persistence_cookie = optional(string) backends = optional(map(object({ ip_address = string port = number weight = optional(number, 1) backup = optional(bool, false) })), {}) }))",
+        "description": "Backend sets keyed by logical name with health checkers and optional static backends. Dynamic registration (instance pools) is the consumer's responsibility.",
+        "required": true
+      },
+      {
+        "name": "listeners",
+        "type": "map(object({ port = number protocol = string default_backend_set_key = string certificate_name = optional(string) ssl_verify_peer = optional(bool, false) }))",
+        "description": "Listeners keyed by logical name, each pointing at a default backend set.",
+        "required": true
+      },
+      {
+        "name": "certificates",
+        "type": "map(object({ certificate_pem = string private_key_pem = string ca_certificate_pem = optional(string) }))",
+        "description": "TLS certificates keyed by logical name, referenced by listeners via certificate_name.",
+        "required": false,
+        "default": "{}",
+        "sensitive": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "lb_id",
+      "description": "OCID of the load balancer."
+    },
+    {
+      "name": "lb_address",
+      "description": "First IP address of the load balancer (public for public LBs, private otherwise)."
+    },
+    {
+      "name": "listener_ids",
+      "description": "Map of logical listener name to listener name on the LB (OCI listeners are LB-scoped, addressed by name)."
+    },
+    {
+      "name": "backend_ids",
+      "description": "Map of logical backend set name to backend set name on the LB. Register dynamic backends against these in the consumer root."
+    }
+  ]
+}

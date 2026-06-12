@@ -1,0 +1,138 @@
+{
+  "id": "aws/load-balancer/nlb",
+  "path": "modules/aws/load-balancer/nlb",
+  "cloud": "aws",
+  "domain": "load-balancer",
+  "name": "nlb",
+  "title": "AWS Load Balancer \u2014 Network Load Balancer",
+  "summary": "Creates an L4 NLB with TCP/UDP/TLS listeners, target groups (instance/ip/alb), cross- zone load balancing, and deletion protection on by default. Target registration is the consumer's responsibility.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "vpc_id",
+        "type": "string",
+        "description": "ID of the VPC hosting the NLB and target groups. Supplied by ID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet IDs for the NLB (one per AZ; a single subnet is permitted for an NLB, unlike an ALB).",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "internal",
+        "type": "bool",
+        "description": "Whether the NLB is internal (true) or internet-facing (false).",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "security_group_ids",
+        "type": "list(string)",
+        "description": "Security group IDs attached to the NLB. NOTE: security groups can only be attached at creation; adding them later forces replacement. Empty list = no SGs (pre-2023 behavior).",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "enable_deletion_protection",
+        "type": "bool",
+        "description": "Enable deletion protection on the NLB (governance/resource-locks). Must be disabled and applied before destroy.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "enable_cross_zone_load_balancing",
+        "type": "bool",
+        "description": "Distribute traffic across targets in all enabled AZs (per-AZ data charges may apply).",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "target_groups",
+        "type": "map(object({ port = number protocol = string target_type = optional(string, \"instance\") deregistration_delay = optional(number, 300) preserve_client_ip = optional(bool) proxy_protocol_v2 = optional(bool, false) health_check = optional(object({ port = optional(string, \"traffic-port\") protocol = optional(string, \"TCP\") path = optional(string) healthy_threshold = optional(number, 3) unhealthy_threshold = optional(number, 3) interval = optional(number, 30) }), {}) }))",
+        "description": "Target groups keyed by logical name. Target registration is the consumer's responsibility.",
+        "required": true
+      },
+      {
+        "name": "listeners",
+        "type": "map(object({ port = number protocol = string target_group_key = string certificate_arn = optional(string) ssl_policy = optional(string, \"ELBSecurityPolicy-TLS13-1-2-2021-06\") }))",
+        "description": "Listeners keyed by logical name. NLB listeners forward to exactly one target group (no rule-based routing at L4).",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "lb_id",
+      "description": "ARN of the network load balancer."
+    },
+    {
+      "name": "lb_dns_name",
+      "description": "DNS name of the NLB."
+    },
+    {
+      "name": "lb_zone_id",
+      "description": "Route 53 hosted zone ID of the NLB (for alias records)."
+    },
+    {
+      "name": "listener_ids",
+      "description": "Map of logical listener name to listener ARN."
+    },
+    {
+      "name": "backend_ids",
+      "description": "Map of logical target group name to target group ARN. Register targets against these in the consumer root module."
+    }
+  ]
+}

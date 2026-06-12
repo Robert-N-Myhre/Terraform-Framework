@@ -1,0 +1,93 @@
+{
+  "id": "gcp/dns/private-zones",
+  "path": "modules/gcp/dns/private-zones",
+  "cloud": "gcp",
+  "domain": "dns",
+  "name": "private-zones",
+  "title": "GCP DNS \u2014 Private Managed Zones",
+  "summary": "Creates private Cloud DNS managed zones \u2014 plain (with record sets), forwarding (queries delegated to target name servers), or peering (namespace delegated to another VPC) \u2014 with VPC visibility lists and labels.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label (lowercased).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' label (lowercased).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set (lowercased). Mandatory labels win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID owning the DNS zones.",
+        "required": true
+      },
+      {
+        "name": "private_zones",
+        "type": "map(object({ domain_name = string description = optional(string, \"Managed by Terraform\") network_self_links = list(string) forwarding_targets = optional(list(object({ ipv4_address = string forwarding_path = optional(string, \"default\") })), []) peering_network_self_link = optional(string) records = optional(map(object({ name = string type = string ttl = optional(number, 300) rrdatas = list(string) })), {}) }))",
+        "description": "Map of private managed zones keyed by logical name. domain_name requires a trailing dot. A zone may be a plain private zone (records), a forwarding zone (forwarding_targets), or a peering zone (peering_network_self_link) \u2014 these modes are mutually exclusive per GCP API.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "zone_ids",
+      "description": "Map of logical zone name to managed zone ID."
+    },
+    {
+      "name": "zone_names",
+      "description": "Map of logical zone name to DNS domain name (with trailing dot)."
+    },
+    {
+      "name": "zone_resource_names",
+      "description": "Map of logical zone name to the GCP zone resource name (needed by record sets created elsewhere)."
+    },
+    {
+      "name": "record_ids",
+      "description": "Map of '<zone-key>/<record-key>' to record set ID."
+    }
+  ]
+}

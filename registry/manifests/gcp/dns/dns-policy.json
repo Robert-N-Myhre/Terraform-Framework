@@ -1,0 +1,106 @@
+{
+  "id": "gcp/dns/dns-policy",
+  "path": "modules/gcp/dns/dns-policy",
+  "cloud": "gcp",
+  "domain": "dns",
+  "name": "dns-policy",
+  "title": "GCP DNS \u2014 DNS Server Policy",
+  "summary": "Creates a DNS server policy attached to one or more VPC networks: inbound forwarding (on-premises \u2192 Cloud DNS resolution), query logging, and optional network-wide alternative name servers.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Retained for convention parity (DNS policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Retained for convention parity (DNS policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Retained for convention parity; DNS policies do not support labels.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID owning the DNS policy.",
+        "required": true
+      },
+      {
+        "name": "network_self_links",
+        "type": "list(string)",
+        "description": "Self-links of the VPC networks the policy attaches to. Only ONE DNS policy may exist per network \u2014 coordinate ownership.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "enable_inbound_forwarding",
+        "type": "bool",
+        "description": "Allocate inbound forwarder IPs in each attached network so on-premises resolvers can query Cloud DNS (GCP's analogue of an inbound resolver endpoint).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "enable_logging",
+        "type": "bool",
+        "description": "Enable query logging for the attached networks.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "alternative_name_servers",
+        "type": "list(object({ ipv4_address = string forwarding_path = optional(string, \"default\") }))",
+        "description": "Alternative name servers \u2014 ALL queries from attached networks (except Compute internal names) forward to these instead of Cloud DNS. Use sparingly; per-domain forwarding belongs in forwarding zones.",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "policy_id",
+      "description": "ID of the DNS policy."
+    },
+    {
+      "name": "inbound_forwarding_enabled",
+      "description": "Whether inbound forwarding is active. The allocated forwarder IPs are visible per network in the console/API (compute addresses named 'dns-forwarding-...'); GCP does not expose them as resource attributes."
+    }
+  ]
+}

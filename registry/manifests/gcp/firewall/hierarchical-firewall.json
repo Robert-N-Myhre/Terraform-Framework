@@ -1,0 +1,104 @@
+{
+  "id": "gcp/firewall/hierarchical-firewall",
+  "path": "modules/gcp/firewall/hierarchical-firewall",
+  "cloud": "gcp",
+  "domain": "firewall",
+  "name": "hierarchical-firewall",
+  "title": "GCP Firewall \u2014 Hierarchical Firewall Policy",
+  "summary": "Creates an organization/folder-level firewall policy with prioritized rules (allow/deny/goto_next) and associations to org or folder nodes. Rules cascade to every project beneath the attached node and evaluate **before** VPC-level rules.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Retained for convention parity (firewall policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Retained for convention parity (firewall policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Retained for convention parity; hierarchical firewall policies do not support labels.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "parent_node",
+        "type": "string",
+        "description": "Organization or folder node the policy attaches under, in 'organizations/<id>' or 'folders/<id>' form. Requires org-level security admin IAM.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "policy_description",
+        "type": "string",
+        "description": "Human-readable description of the hierarchical firewall policy.",
+        "required": false,
+        "default": "\"Managed by Terraform\""
+      },
+      {
+        "name": "rules",
+        "type": "map(object({ priority = number direction = string action = string description = optional(string) src_ip_ranges = optional(list(string), []) dest_ip_ranges = optional(list(string), []) layer4_configs = list(object({ ip_protocol = string ports = optional(list(string), []) })) target_service_accounts = optional(list(string), []) enable_logging = optional(bool, false) }))",
+        "description": "Map of hierarchical firewall rules keyed by logical name. Rules evaluate BEFORE VPC-level rules in every project under parent_node; 'goto_next' delegates the decision downward. Hierarchical rules cannot target network tags \u2014 only service accounts.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "associations",
+        "type": "map(string)",
+        "description": "Map of logical association name to org/folder node ('organizations/<id>' or 'folders/<id>') where the policy is enforced.",
+        "required": false,
+        "default": "{}"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map with single key 'policy' to the hierarchical firewall policy ID."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical rule name to firewall policy rule priority (rules are addressed by priority within the policy)."
+    },
+    {
+      "name": "association_ids",
+      "description": "Map of logical association name to association ID."
+    }
+  ]
+}

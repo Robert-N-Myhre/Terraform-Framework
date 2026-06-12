@@ -1,0 +1,187 @@
+{
+  "id": "azure/core-network",
+  "path": "modules/azure/core-network",
+  "cloud": "azure",
+  "domain": "core-network",
+  "name": "core-network",
+  "title": "Azure Core Network",
+  "summary": "Creates a virtual network with standalone subnets (service endpoints, delegations), per-subnet route tables with UDRs, an optional NAT gateway, optional Network Watcher flow logs, and a CanNotDelete management lock on the VNet (on by default).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "azurerm": {
+      "source": "hashicorp/azurerm",
+      "version": "~> 3.80"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "resource_group_name",
+        "type": "string",
+        "description": "Name of the existing resource group in which to create the VNet and child resources. Resource group lifecycle belongs to the consumer.",
+        "required": true
+      },
+      {
+        "name": "location",
+        "type": "string",
+        "description": "Azure region for all resources (e.g., 'eastus2'). No hardcoded regions \u2014 always supplied by the consumer.",
+        "required": true
+      },
+      {
+        "name": "address_space",
+        "type": "list(string)",
+        "description": "IPv4 address space(s) for the virtual network (e.g., [\\\"10.40.0.0/16\\\"]).",
+        "required": true
+      },
+      {
+        "name": "dns_servers",
+        "type": "list(string)",
+        "description": "Custom DNS server IPs for the VNet. Empty list uses Azure-provided DNS.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "subnets",
+        "type": "map(object({ address_prefixes = list(string) service_endpoints = optional(list(string), []) delegation = optional(object({ name = string actions = optional(list(string), [\"Microsoft.Network/virtualNetworks/subnets/action\"]) })) private_endpoint_network_policies_enabled = optional(bool, true) create_route_table = optional(bool, true) routes = optional(map(object({ address_prefix = string next_hop_type = string next_hop_in_ip_address = optional(string) })), {}) }))",
+        "description": "Map of subnets keyed by logical name. Each subnet optionally gets its own route table (create_route_table, default true) with UDRs from routes. NSG association is intentionally NOT handled here \u2014 invoke the azure/firewall/nsgs module independently for that.",
+        "required": true
+      },
+      {
+        "name": "nat_gateway_subnet_keys",
+        "type": "list(string)",
+        "description": "Logical subnet keys that should egress through a module-managed NAT gateway. Empty list disables NAT gateway creation.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "nat_gateway_zones",
+        "type": "list(string)",
+        "description": "Availability zones for the NAT gateway public IP (e.g., [\\\"1\\\"]). Azure NAT Gateway is zonal, not zone-redundant.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "enable_flow_logs",
+        "type": "bool",
+        "description": "Whether to enable VNet flow logs via Network Watcher. Requires network_watcher_name/network_watcher_resource_group and flow_log_storage_account_id.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "network_watcher_name",
+        "type": "string",
+        "description": "Name of the existing Network Watcher instance (typically 'NetworkWatcher_<region>'). Required when enable_flow_logs = true.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "network_watcher_resource_group",
+        "type": "string",
+        "description": "Resource group of the Network Watcher instance (typically 'NetworkWatcherRG'). Required when enable_flow_logs = true.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "flow_log_storage_account_id",
+        "type": "string",
+        "description": "ID of the storage account receiving flow logs. Required when enable_flow_logs = true.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "flow_log_retention_days",
+        "type": "number",
+        "description": "Retention in days for flow logs in the storage account.",
+        "required": false,
+        "default": "30"
+      },
+      {
+        "name": "enable_management_lock",
+        "type": "bool",
+        "description": "Apply a CanNotDelete management lock to the VNet (governance/resource-locks). Remove the lock (apply with false) before destroying.",
+        "required": false,
+        "default": "true"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "network_id",
+      "description": "ID of the created virtual network."
+    },
+    {
+      "name": "network_name",
+      "description": "Name of the created virtual network (needed by peering and DNS-link modules)."
+    },
+    {
+      "name": "network_cidr",
+      "description": "Address space of the virtual network (list \u2014 Azure VNets support multiple ranges)."
+    },
+    {
+      "name": "subnet_ids",
+      "description": "Map of logical subnet name to subnet ID."
+    },
+    {
+      "name": "subnet_cidrs",
+      "description": "Map of logical subnet name to address prefixes."
+    },
+    {
+      "name": "route_table_ids",
+      "description": "Map of logical subnet name to its route table ID (only subnets with create_route_table = true)."
+    },
+    {
+      "name": "nat_ids",
+      "description": "Map with key 'natgw' to the NAT gateway ID. Empty when no NAT subnets are configured."
+    },
+    {
+      "name": "nat_public_ips",
+      "description": "Map with key 'natgw' to the NAT gateway public IP. Empty when NAT is disabled."
+    },
+    {
+      "name": "flow_log_id",
+      "description": "ID of the Network Watcher flow log, or null when disabled."
+    }
+  ]
+}

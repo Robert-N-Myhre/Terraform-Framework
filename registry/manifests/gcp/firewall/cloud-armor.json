@@ -1,0 +1,117 @@
+{
+  "id": "gcp/firewall/cloud-armor",
+  "path": "modules/gcp/firewall/cloud-armor",
+  "cloud": "gcp",
+  "domain": "firewall",
+  "name": "cloud-armor",
+  "title": "GCP Firewall \u2014 Cloud Armor",
+  "summary": "Creates a Cloud Armor security policy with IP-range and CEL/preconfigured-WAF rules (SQLi/XSS/etc), rate limiting and throttling, preview (log-only) mode, optional Adaptive Protection, and a configurable default rule.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Retained for convention parity (security policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Retained for convention parity (security policies are not labelable).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Retained for convention parity; Cloud Armor security policies do not support labels.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID owning the security policy.",
+        "required": true
+      },
+      {
+        "name": "default_action",
+        "type": "string",
+        "description": "Action of the lowest-priority default rule: 'allow' or 'deny(403)' / 'deny(404)' / 'deny(502)'.",
+        "required": false,
+        "default": "\"allow\""
+      },
+      {
+        "name": "rules",
+        "type": "map(object({ priority = number action = string description = optional(string) src_ip_ranges = optional(list(string), []) expression = optional(string) preview = optional(bool, false) rate_limit = optional(object({ count_per_interval = number interval_sec = number ban_duration_sec = optional(number) conform_action = optional(string, \"allow\") exceed_action = optional(string, \"deny(429)\") enforce_on_key = optional(string, \"IP\") })) }))",
+        "description": "Map of Cloud Armor rules keyed by logical name. Use src_ip_ranges for simple IP allow/deny, or expression for CEL / preconfigured WAF rules (SQLi, XSS, LFI, etc). action = \"throttle\" requires rate_limit. preview = true evaluates and logs without enforcing.",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "adaptive_protection_enabled",
+        "type": "bool",
+        "description": "Enable Adaptive Protection (ML-based L7 DDoS detection).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "json_parsing",
+        "type": "string",
+        "description": "JSON parsing for WAF inspection: DISABLED or STANDARD.",
+        "required": false,
+        "default": "\"DISABLED\""
+      },
+      {
+        "name": "log_level",
+        "type": "string",
+        "description": "Logging verbosity: NORMAL or VERBOSE.",
+        "required": false,
+        "default": "\"NORMAL\""
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map with single key 'policy' to the Cloud Armor security policy ID. Attach to backend services via this ID."
+    },
+    {
+      "name": "policy_self_link",
+      "description": "Self-link of the security policy (accepted by backend service security_policy arguments)."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical rule name to rule priority (Cloud Armor rules are addressed by priority within the policy)."
+    }
+  ]
+}

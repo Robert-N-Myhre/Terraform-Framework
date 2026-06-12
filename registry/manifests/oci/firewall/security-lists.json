@@ -1,0 +1,90 @@
+{
+  "id": "oci/firewall/security-lists",
+  "path": "modules/oci/firewall/security-lists",
+  "cloud": "oci",
+  "domain": "firewall",
+  "name": "security-lists",
+  "title": "OCI Firewall \u2014 Security Lists",
+  "summary": "Creates subnet-level security lists with stateful (default) or stateless rules over TCP/UDP/ICMP with port and ICMP-type options.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the security lists.",
+        "required": true
+      },
+      {
+        "name": "vcn_id",
+        "type": "string",
+        "description": "OCID of the VCN the security lists belong to. Supplied by OCID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "security_lists",
+        "type": "map(object({ ingress_rules = optional(map(object({ protocol = string source = string source_type = optional(string, \"CIDR_BLOCK\") stateless = optional(bool, false) description = optional(string) tcp_min = optional(number) tcp_max = optional(number) udp_min = optional(number) udp_max = optional(number) icmp_type = optional(number) icmp_code = optional(number) })), {}) egress_rules = optional(map(object({ protocol = string destination = string destination_type = optional(string, \"CIDR_BLOCK\") stateless = optional(bool, false) description = optional(string) tcp_min = optional(number) tcp_max = optional(number) udp_min = optional(number) udp_max = optional(number) icmp_type = optional(number) icmp_code = optional(number) })), {}) }))",
+        "description": "Map of security lists keyed by logical name. Rules are STATEFUL by default (stateless = true opts out per rule). Protocols use IANA numbers as strings (\"6\" TCP, \"17\" UDP, \"1\" ICMP) or \"all\". Security lists apply to subnets \u2014 pass the resulting IDs into oci_core_subnet security_list_ids in the consumer root (or use the VCN default list).",
+        "required": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map of logical security list name to security list OCID. Attach to subnets via security_list_ids in the consumer root."
+    },
+    {
+      "name": "rule_ids",
+      "description": "OCI security list rules are inline blocks without standalone IDs; this output maps logical list names to their rule counts for parity."
+    }
+  ]
+}

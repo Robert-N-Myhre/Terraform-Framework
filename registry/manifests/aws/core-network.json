@@ -1,0 +1,181 @@
+{
+  "id": "aws/core-network",
+  "path": "modules/aws/core-network",
+  "cloud": "aws",
+  "domain": "core-network",
+  "name": "core-network",
+  "title": "AWS Core Network",
+  "summary": "Creates a VPC with subnets, route tables, an optional internet gateway, optional NAT gateways (single or per-AZ), and optional VPC flow logs delivered to a module-managed CloudWatch log group.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module (e.g., '01', 'hub').",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "region",
+        "type": "string",
+        "description": "AWS region in which to create the VPC and all child resources (e.g., 'us-east-1'). Must match the region of the configured provider.",
+        "required": true
+      },
+      {
+        "name": "vpc_cidr_block",
+        "type": "string",
+        "description": "IPv4 CIDR block for the VPC (e.g., '10.0.0.0/16').",
+        "required": true
+      },
+      {
+        "name": "enable_dns_support",
+        "type": "bool",
+        "description": "Whether to enable DNS resolution inside the VPC via the Amazon-provided DNS server.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "enable_dns_hostnames",
+        "type": "bool",
+        "description": "Whether instances launched in the VPC receive Amazon-provided DNS hostnames.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "subnets",
+        "type": "map(object({ cidr_block = string availability_zone = string tier = string map_public_ip_on_launch = optional(bool, false) }))",
+        "description": "Map of subnets to create, keyed by a stable logical name (e.g., 'app-a'). tier = \"public\" attaches the subnet to the public route table (internet gateway default route); tier = \"private\" attaches it to a private route table (NAT gateway default route when NAT is enabled).",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "enable_internet_gateway",
+        "type": "bool",
+        "description": "Whether to create an internet gateway and a default route for public-tier subnets.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "enable_nat_gateway",
+        "type": "bool",
+        "description": "Whether to create NAT gateway(s) for private-tier subnet egress. Requires at least one public-tier subnet and enable_internet_gateway = true.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "nat_gateway_strategy",
+        "type": "string",
+        "description": "NAT gateway placement: 'single' creates one NAT gateway in the first public subnet; 'per_az' creates one per availability zone that hosts a public subnet (higher cost, AZ-fault isolation).",
+        "required": false,
+        "default": "\"single\"",
+        "has_validation": true
+      },
+      {
+        "name": "enable_flow_logs",
+        "type": "bool",
+        "description": "Whether to enable VPC flow logs delivered to a module-managed CloudWatch log group.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "flow_log_retention_days",
+        "type": "number",
+        "description": "Retention period in days for the flow-log CloudWatch log group.",
+        "required": false,
+        "default": "30"
+      },
+      {
+        "name": "flow_log_traffic_type",
+        "type": "string",
+        "description": "Traffic type captured by flow logs: ACCEPT, REJECT, or ALL.",
+        "required": false,
+        "default": "\"ALL\"",
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "network_id",
+      "description": "ID of the created VPC."
+    },
+    {
+      "name": "network_cidr",
+      "description": "IPv4 CIDR block of the VPC."
+    },
+    {
+      "name": "network_arn",
+      "description": "ARN of the created VPC."
+    },
+    {
+      "name": "subnet_ids",
+      "description": "Map of logical subnet name to subnet ID."
+    },
+    {
+      "name": "subnet_cidrs",
+      "description": "Map of logical subnet name to subnet CIDR block."
+    },
+    {
+      "name": "route_table_ids",
+      "description": "Map of route table IDs: key 'public' for the shared public table (if any), plus one entry per private subnet keyed by logical subnet name."
+    },
+    {
+      "name": "internet_gateway_id",
+      "description": "ID of the internet gateway, or null when enable_internet_gateway = false."
+    },
+    {
+      "name": "nat_ids",
+      "description": "Map of availability zone to NAT gateway ID. Empty when enable_nat_gateway = false."
+    },
+    {
+      "name": "nat_public_ips",
+      "description": "Map of availability zone to NAT gateway public IP. Empty when enable_nat_gateway = false."
+    },
+    {
+      "name": "flow_log_id",
+      "description": "ID of the VPC flow log, or null when enable_flow_logs = false."
+    }
+  ]
+}

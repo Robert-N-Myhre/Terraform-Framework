@@ -1,0 +1,108 @@
+{
+  "id": "gcp/transit/network-connectivity-center",
+  "path": "modules/gcp/transit/network-connectivity-center",
+  "cloud": "gcp",
+  "domain": "transit",
+  "name": "network-connectivity-center",
+  "title": "GCP Transit \u2014 Network Connectivity Center",
+  "summary": "Creates an NCC hub with VPC-network spokes (full-mesh inter-VPC reachability) and hybrid spokes (HA VPN tunnels / Interconnect VLAN attachments, optional branch-to-branch transfer over Google's backbone).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label (lowercased).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Applied as the mandatory 'cost_center' label (lowercased).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set (lowercased).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID hosting the NCC hub.",
+        "required": true
+      },
+      {
+        "name": "hub_description",
+        "type": "string",
+        "description": "Human-readable description of the hub.",
+        "required": false,
+        "default": "\"Managed by Terraform\""
+      },
+      {
+        "name": "vpc_spokes",
+        "type": "map(object({ vpc_self_link = string exclude_export_ranges = optional(list(string), []) }))",
+        "description": "VPC-network spokes keyed by logical name. Full-mesh subnet reachability between all VPC spokes on the hub.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "hybrid_spokes",
+        "type": "map(object({ location = string type = string uris = list(string) site_to_site_data_transfer = optional(bool, true) }))",
+        "description": "Hybrid spokes (HA VPN tunnels or Interconnect VLAN attachments) keyed by logical name. site_to_site_data_transfer enables branch-to-branch through Google's backbone.",
+        "required": false,
+        "default": "{}",
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "hub_id",
+      "description": "ID of the Network Connectivity Center hub."
+    },
+    {
+      "name": "attachment_ids",
+      "description": "Map of logical spoke name to spoke ID across VPC and hybrid spokes."
+    },
+    {
+      "name": "vpc_spoke_ids",
+      "description": "Map of logical VPC spoke name to spoke ID."
+    },
+    {
+      "name": "hybrid_spoke_ids",
+      "description": "Map of logical hybrid spoke name to spoke ID."
+    }
+  ]
+}

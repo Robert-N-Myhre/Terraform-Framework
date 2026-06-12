@@ -1,0 +1,114 @@
+{
+  "id": "oci/dns/resolver",
+  "path": "modules/oci/dns/resolver",
+  "cloud": "oci",
+  "domain": "dns",
+  "name": "resolver",
+  "title": "OCI DNS \u2014 VCN Resolver",
+  "summary": "Manages a VCN's implicit DNS resolver: attached private views, listening (inbound) endpoints, forwarding (outbound) endpoints, and conditional FORWARD rules.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "resolver_id",
+        "type": "string",
+        "description": "OCID of the VCN's implicit DNS resolver (from the VCN's 'dns_resolver_association' / data source oci_core_vcn_dns_resolver_association). OCI creates this with the VCN; this module manages it.",
+        "required": true
+      },
+      {
+        "name": "attached_view_ids",
+        "type": "list(string)",
+        "description": "DNS view OCIDs to attach to the resolver (e.g., outputs of oci/dns/private-views). Order matters: earlier views win on conflicting names.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "listening_endpoints",
+        "type": "map(object({ subnet_id = string listening_address = optional(string) nsg_ids = optional(list(string), []) }))",
+        "description": "Listening endpoints keyed by logical name (on-premises -> VCN resolution; OCI's analogue of an inbound resolver endpoint).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "forwarding_endpoints",
+        "type": "map(object({ subnet_id = string forwarding_address = optional(string) nsg_ids = optional(list(string), []) }))",
+        "description": "Forwarding endpoints keyed by logical name (VCN -> on-premises resolution; OCI's analogue of an outbound resolver endpoint).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "forward_rules",
+        "type": "map(object({ domain_names = list(string) forwarding_endpoint_key = string destination_addresses = list(string) }))",
+        "description": "Conditional forwarding rules keyed by logical name: matching queries exit via the named forwarding endpoint to the destination addresses.",
+        "required": false,
+        "default": "{}"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "resolver_id",
+      "description": "OCID of the managed VCN resolver."
+    },
+    {
+      "name": "inbound_endpoint_ips",
+      "description": "Map of logical listening endpoint name to listening address (targets for on-premises conditional forwarders)."
+    },
+    {
+      "name": "outbound_endpoint_ips",
+      "description": "Map of logical forwarding endpoint name to forwarding address."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical forward rule name to its covered domains (rules live inline on the resolver without standalone OCIDs)."
+    }
+  ]
+}

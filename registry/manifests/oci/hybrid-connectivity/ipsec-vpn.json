@@ -1,0 +1,109 @@
+{
+  "id": "oci/hybrid-connectivity/ipsec-vpn",
+  "path": "modules/oci/hybrid-connectivity/ipsec-vpn",
+  "cloud": "oci",
+  "domain": "hybrid-connectivity",
+  "name": "ipsec-vpn",
+  "title": "OCI Hybrid Connectivity \u2014 Site-to-Site IPSec VPN",
+  "summary": "Creates CPE objects and IPSec connections terminating on a DRG, with per-tunnel configuration (BGP or static, PSK, IKE version) via tunnel management.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the CPE and IPSec connections.",
+        "required": true
+      },
+      {
+        "name": "drg_id",
+        "type": "string",
+        "description": "OCID of the DRG terminating the VPN. May come from any source (oci/transit/drg output, existing DRG) \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "customer_premises_equipment",
+        "type": "map(object({ ip_address = string cpe_device_shape_id = optional(string) }))",
+        "description": "CPE objects (on-premises devices) keyed by logical name.",
+        "required": true
+      },
+      {
+        "name": "ipsec_connections",
+        "type": "map(object({ cpe_key = string static_routes = optional(list(string), []) tunnels = optional(map(object({ tunnel_index = number routing_type = optional(string, \"BGP\") shared_secret = optional(string) ike_version = optional(string, \"V2\") customer_bgp_asn = optional(string) oracle_interface_ip = optional(string) customer_interface_ip = optional(string) })), {}) }))",
+        "description": "IPSec connections keyed by logical name, each referencing a CPE. OCI always provisions TWO tunnels per connection; entries in tunnels (keyed 1:1 by tunnel_index) configure BGP/PSK per tunnel via tunnel management. static_routes must be non-empty when any tunnel uses STATIC routing.",
+        "required": true,
+        "sensitive": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "gateway_id",
+      "description": "OCID of the DRG terminating the VPN (as supplied)."
+    },
+    {
+      "name": "cpe_ids",
+      "description": "Map of logical CPE name to CPE OCID."
+    },
+    {
+      "name": "connection_ids",
+      "description": "Map of logical IPSec connection name to IPSec connection OCID."
+    },
+    {
+      "name": "tunnel_oracle_ips",
+      "description": "Map of logical connection name to the Oracle-side VPN headend IPs of both tunnels. Hand these to the on-premises device configuration."
+    },
+    {
+      "name": "tunnel_status",
+      "description": "Map of logical connection name to both tunnels' lifecycle/status."
+    }
+  ]
+}

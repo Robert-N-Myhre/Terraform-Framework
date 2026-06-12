@@ -1,0 +1,163 @@
+{
+  "id": "gcp/load-balancer/internal",
+  "path": "modules/gcp/load-balancer/internal",
+  "cloud": "gcp",
+  "domain": "load-balancer",
+  "name": "internal",
+  "title": "GCP Load Balancer \u2014 Internal Passthrough Network LB",
+  "summary": "Creates an internal L4 passthrough load balancer: regional health check, region backend service (INTERNAL scheme), and forwarding rule with optional static IP, all-ports mode, and global access.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Applied as the mandatory 'cost_center' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set (lowercased).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID hosting the load balancer.",
+        "required": true
+      },
+      {
+        "name": "region",
+        "type": "string",
+        "description": "Region of the internal load balancer and its backend service.",
+        "required": true
+      },
+      {
+        "name": "network_self_link",
+        "type": "string",
+        "description": "Self-link of the VPC network. Supplied as a plain value \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "subnet_self_link",
+        "type": "string",
+        "description": "Self-link of the subnet hosting the forwarding-rule IP.",
+        "required": true
+      },
+      {
+        "name": "ip_address",
+        "type": "string",
+        "description": "Static internal IP for the forwarding rule. Null = ephemeral from the subnet range.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "protocol",
+        "type": "string",
+        "description": "Load-balanced protocol: TCP or UDP.",
+        "required": false,
+        "default": "\"TCP\"",
+        "has_validation": true
+      },
+      {
+        "name": "ports",
+        "type": "list(string)",
+        "description": "Ports the forwarding rule accepts (max 5), or empty with all_ports = true.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "all_ports",
+        "type": "bool",
+        "description": "Forward all ports (mutually exclusive with ports).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "allow_global_access",
+        "type": "bool",
+        "description": "Allow clients from any region of the VPC (not just the LB region) to reach the ILB.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "backend_groups",
+        "type": "map(object({ group = string balancing_mode = optional(string, \"CONNECTION\") failover = optional(bool, false) }))",
+        "description": "Backend instance groups / NEGs keyed by logical name. Group lifecycle (MIGs, NEGs) is the consumer's responsibility.",
+        "required": true
+      },
+      {
+        "name": "health_check",
+        "type": "object({ port = number protocol = optional(string, \"TCP\") request_path = optional(string, \"/\") check_interval_sec = optional(number, 5) timeout_sec = optional(number, 5) healthy_threshold = optional(number, 2) unhealthy_threshold = optional(number, 2) })",
+        "description": "Health check configuration for the backend service.",
+        "required": true
+      },
+      {
+        "name": "session_affinity",
+        "type": "string",
+        "description": "Session affinity: NONE, CLIENT_IP, CLIENT_IP_PROTO, or CLIENT_IP_PORT_PROTO.",
+        "required": false,
+        "default": "\"NONE\""
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "lb_id",
+      "description": "ID of the forwarding rule (the ILB frontend)."
+    },
+    {
+      "name": "lb_address",
+      "description": "Internal IP address of the load balancer."
+    },
+    {
+      "name": "listener_ids",
+      "description": "Map with single key 'forwarding_rule' to the forwarding rule self-link (GCP's analogue of a listener)."
+    },
+    {
+      "name": "backend_ids",
+      "description": "Map with single key 'backend_service' to the region backend service ID."
+    },
+    {
+      "name": "health_check_id",
+      "description": "ID of the regional health check."
+    }
+  ]
+}

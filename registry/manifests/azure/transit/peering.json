@@ -1,0 +1,75 @@
+{
+  "id": "azure/transit/peering",
+  "path": "modules/azure/transit/peering",
+  "cloud": "azure",
+  "domain": "transit",
+  "name": "peering",
+  "title": "Azure Transit \u2014 VNet Peering",
+  "summary": "Creates bidirectional VNet peering (two one-way resources per pair) with gateway transit and forwarded-traffic options.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "azurerm": {
+      "source": "hashicorp/azurerm",
+      "version": "~> 3.80"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Retained for convention parity (peerings are not taggable).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Retained for convention parity (peerings are not taggable).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Retained for convention parity; Azure VNet peerings do not support tags.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "peerings",
+        "type": "map(object({ vnet_a_name = string vnet_a_resource_group_name = string vnet_a_id = string vnet_b_name = string vnet_b_resource_group_name = string vnet_b_id = string a_to_b = optional(object({ allow_forwarded_traffic = optional(bool, false) allow_gateway_transit = optional(bool, false) use_remote_gateways = optional(bool, false) }), {}) b_to_a = optional(object({ allow_forwarded_traffic = optional(bool, false) allow_gateway_transit = optional(bool, false) use_remote_gateways = optional(bool, false) }), {}) }))",
+        "description": "Map of VNet peering pairs keyed by logical name. Azure peering is two one-way resources; this module creates both directions. Both VNets must be reachable by the configured provider (same tenant; cross-subscription works with sufficient RBAC). allow_gateway_transit on one side pairs with use_remote_gateways on the other \u2014 never both on the same side.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "connection_ids",
+      "description": "Map of '<peering-key>/a-to-b' and '<peering-key>/b-to-a' to peering resource IDs."
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "id": "gcp/core-network",
+  "path": "modules/gcp/core-network",
+  "cloud": "gcp",
+  "domain": "core-network",
+  "name": "core-network",
+  "title": "GCP Core Network",
+  "summary": "Creates a custom-mode global VPC with regional subnets (secondary ranges for GKE, per-subnet flow logs, Private Google Access), static routes, and optional Cloud NAT (router + NAT).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label. GCP labels require lowercase letters, numbers, hyphens, underscores.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' label (lowercase).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set. GCP label keys/values must be lowercase. Mandatory labels win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID hosting the VPC. No hardcoded project IDs \u2014 always supplied by the consumer.",
+        "required": true
+      },
+      {
+        "name": "routing_mode",
+        "type": "string",
+        "description": "Dynamic routing mode for the VPC's Cloud Routers: REGIONAL or GLOBAL.",
+        "required": false,
+        "default": "\"GLOBAL\"",
+        "has_validation": true
+      },
+      {
+        "name": "delete_default_routes_on_create",
+        "type": "bool",
+        "description": "Delete the auto-created 0.0.0.0/0 route at VPC creation (strict egress posture; re-add explicit routes as needed).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "subnets",
+        "type": "map(object({ ip_cidr_range = string region = string private_ip_google_access = optional(bool, true) secondary_ip_ranges = optional(map(string), {}) flow_logs = optional(object({ enabled = bool aggregation_interval = optional(string, \"INTERVAL_5_SEC\") flow_sampling = optional(number, 0.5) metadata = optional(string, \"INCLUDE_ALL_METADATA\") }), { enabled = false }) }))",
+        "description": "Map of subnets keyed by logical name. GCP subnets are REGIONAL (region per subnet, unlike AWS/Azure zonal-or-regional models). Flow logs are configured per subnet, not per network. secondary_ip_ranges supports GKE alias IPs.",
+        "required": true
+      },
+      {
+        "name": "static_routes",
+        "type": "map(object({ dest_range = string priority = optional(number, 1000) next_hop_gateway = optional(string) next_hop_ip = optional(string) next_hop_ilb = optional(string) tags = optional(list(string), []) }))",
+        "description": "Static routes keyed by logical name. Exactly one next_hop_* must be set per route.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "cloud_nat",
+        "type": "object({ enabled = bool region = optional(string) source_subnetwork_ip_ranges_to_nat = optional(string, \"ALL_SUBNETWORKS_ALL_IP_RANGES\") min_ports_per_vm = optional(number, 64) log_errors_only = optional(bool, true) })",
+        "description": "Cloud NAT configuration. Creates a Cloud Router + NAT in the given region for private-subnet egress.",
+        "required": false,
+        "default": "{ enabled = false }"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "network_id",
+      "description": "ID (self-link form) of the created VPC network."
+    },
+    {
+      "name": "network_name",
+      "description": "Name of the VPC network (needed by firewall/peering/DNS modules)."
+    },
+    {
+      "name": "network_self_link",
+      "description": "Self-link of the VPC network."
+    },
+    {
+      "name": "network_cidr",
+      "description": "GCP VPCs have no network-level CIDR (subnets carry ranges); always null. Present for cross-cloud output-contract parity."
+    },
+    {
+      "name": "subnet_ids",
+      "description": "Map of logical subnet name to subnet ID."
+    },
+    {
+      "name": "subnet_self_links",
+      "description": "Map of logical subnet name to subnet self-link."
+    },
+    {
+      "name": "subnet_cidrs",
+      "description": "Map of logical subnet name to primary CIDR range."
+    },
+    {
+      "name": "route_ids",
+      "description": "Map of logical static route name to route ID. (GCP has no route tables \u2014 routes attach to the network.)"
+    },
+    {
+      "name": "nat_ids",
+      "description": "Map with key 'nat' to the Cloud NAT ID. Empty when Cloud NAT is disabled."
+    },
+    {
+      "name": "flow_log_id",
+      "description": "Always null \u2014 GCP flow logs are subnet-level settings, not standalone resources. Present for output-contract parity; see subnet log_config."
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "id": "azure/dns/private-zones",
+  "path": "modules/azure/dns/private-zones",
+  "cloud": "azure",
+  "domain": "dns",
+  "name": "private-zones",
+  "title": "Azure DNS \u2014 Private DNS Zones",
+  "summary": "Creates private DNS zones with virtual network links (optional VM auto-registration) and A/CNAME/TXT record sets.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "azurerm": {
+      "source": "hashicorp/azurerm",
+      "version": "~> 3.80"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "resource_group_name",
+        "type": "string",
+        "description": "Name of the existing resource group for the private DNS zones.",
+        "required": true
+      },
+      {
+        "name": "private_zones",
+        "type": "map(object({ domain_name = string vnet_links = optional(map(object({ vnet_id = string registration_enabled = optional(bool, false) })), {}) a_records = optional(map(object({ name = string ttl = optional(number, 300) records = list(string) })), {}) cname_records = optional(map(object({ name = string ttl = optional(number, 300) record = string })), {}) txt_records = optional(map(object({ name = string ttl = optional(number, 300) records = list(string) })), {}) }))",
+        "description": "Map of private DNS zones keyed by logical name. Unlike AWS, an Azure private zone can exist with zero VNet links; resolution only works from linked VNets. registration_enabled auto-creates records for VMs in the linked VNet (max one registration link per VNet).",
+        "required": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "zone_ids",
+      "description": "Map of logical zone name to private DNS zone ID."
+    },
+    {
+      "name": "zone_names",
+      "description": "Map of logical zone name to DNS domain name."
+    },
+    {
+      "name": "vnet_link_ids",
+      "description": "Map of '<zone-key>/<link-key>' to virtual network link ID."
+    },
+    {
+      "name": "record_ids",
+      "description": "Map of '<type>/<zone-key>/<record-key>' to record ID across A, CNAME, and TXT records."
+    }
+  ]
+}

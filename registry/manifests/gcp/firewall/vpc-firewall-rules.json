@@ -1,0 +1,95 @@
+{
+  "id": "gcp/firewall/vpc-firewall-rules",
+  "path": "modules/gcp/firewall/vpc-firewall-rules",
+  "cloud": "gcp",
+  "domain": "firewall",
+  "name": "vpc-firewall-rules",
+  "title": "GCP Firewall \u2014 VPC Firewall Rules",
+  "summary": "Creates classic (network-global, stateful) VPC firewall rules with tag or service-account targeting, allow/deny actions, priorities, and optional logging.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Retained for convention parity (classic firewall rules are not labelable).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Retained for convention parity (classic firewall rules are not labelable).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Retained for convention parity; classic VPC firewall rules do not support labels.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID owning the network and rules.",
+        "required": true
+      },
+      {
+        "name": "network_name",
+        "type": "string",
+        "description": "Name (or self-link) of the VPC network the rules attach to. Supplied as a plain value \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "rules",
+        "type": "map(object({ description = optional(string) direction = string action = string priority = optional(number, 1000) source_ranges = optional(list(string), []) source_tags = optional(list(string), []) source_service_accounts = optional(list(string), []) destination_ranges = optional(list(string), []) target_tags = optional(list(string), []) target_service_accounts = optional(list(string), []) allow_deny = list(object({ protocol = string ports = optional(list(string), []) })) log_enabled = optional(bool, false) }))",
+        "description": "Map of firewall rules keyed by logical name. GCP rules are NETWORK-GLOBAL and stateful; they target instances via network tags or service accounts (never both in one rule \u2014 GCP rejects mixing tags and service accounts). Implied rules: allow-egress-all and deny-ingress-all exist at priority 65535 in every VPC.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map of logical rule name to firewall rule ID. (GCP has no grouping resource; each rule is standalone, so firewall_ids == rule_ids.)"
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical rule name to firewall rule ID."
+    },
+    {
+      "name": "rule_self_links",
+      "description": "Map of logical rule name to firewall rule self-link."
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "id": "gcp/hybrid-connectivity/cloud-vpn",
+  "path": "modules/gcp/hybrid-connectivity/cloud-vpn",
+  "cloud": "gcp",
+  "domain": "hybrid-connectivity",
+  "name": "cloud-vpn",
+  "title": "GCP Hybrid Connectivity \u2014 HA Cloud VPN",
+  "summary": "Creates an HA VPN gateway (two interfaces), a Cloud Router, external peer gateways (one- or two-interface), and IPsec tunnels each with a BGP session (router interface + peer).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Applied as the mandatory 'cost_center' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set (lowercased).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID hosting the VPN gateway.",
+        "required": true
+      },
+      {
+        "name": "region",
+        "type": "string",
+        "description": "Region of the HA VPN gateway and Cloud Router.",
+        "required": true
+      },
+      {
+        "name": "network_self_link",
+        "type": "string",
+        "description": "Self-link of the VPC network. Supplied as a plain value \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "router_asn",
+        "type": "number",
+        "description": "Google-side BGP ASN for the Cloud Router (private range; must differ from peer ASNs).",
+        "required": false,
+        "default": "64514"
+      },
+      {
+        "name": "peer_gateways",
+        "type": "map(object({ interfaces = list(string) }))",
+        "description": "External (on-premises) peer VPN gateways keyed by logical name. Two interfaces enable the 99.99% HA topology.",
+        "required": true
+      },
+      {
+        "name": "tunnels",
+        "type": "map(object({ peer_gateway_key = string peer_external_gateway_interface = number vpn_gateway_interface = number shared_secret = string ike_version = optional(number, 2) bgp_session_range = string peer_bgp_ip = string peer_asn = number advertised_route_priority = optional(number, 100) }))",
+        "description": "HA VPN tunnels keyed by logical name, each with its BGP session. For 99.99% SLA create 2 or 4 tunnels across both gateway interfaces.",
+        "required": true,
+        "sensitive": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "gateway_id",
+      "description": "ID of the HA VPN gateway."
+    },
+    {
+      "name": "gateway_interface_ips",
+      "description": "Map of interface index (0/1) to the Google-side public IP. Hand these to the on-premises device configuration."
+    },
+    {
+      "name": "router_id",
+      "description": "ID of the Cloud Router carrying the BGP sessions."
+    },
+    {
+      "name": "connection_ids",
+      "description": "Map of logical tunnel name to VPN tunnel ID."
+    },
+    {
+      "name": "tunnel_self_links",
+      "description": "Map of logical tunnel name to tunnel self-link (consumable as NCC hybrid-spoke URIs)."
+    },
+    {
+      "name": "bgp_peer_ids",
+      "description": "Map of logical tunnel name to router peer ID."
+    }
+  ]
+}

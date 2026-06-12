@@ -1,0 +1,88 @@
+{
+  "id": "oci/transit/lpg",
+  "path": "modules/oci/transit/lpg",
+  "cloud": "oci",
+  "domain": "transit",
+  "name": "lpg",
+  "title": "OCI Transit \u2014 Local Peering Gateways",
+  "summary": "Creates LPG pairs for same-region VCN peering \u2014 one gateway in each VCN, connected by setting `peer_id` on side A.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the LPGs.",
+        "required": true
+      },
+      {
+        "name": "peerings",
+        "type": "map(object({ vcn_a_id = string vcn_b_id = string lpg_a_route_table_id = optional(string) lpg_b_route_table_id = optional(string) }))",
+        "description": "Map of same-region VCN peering pairs keyed by logical name. Two LPGs are created per pair (one in each VCN) and connected by setting peer_id on side A. Both VCNs must be reachable by the configured provider identity (cross-tenancy LPG peering requires IAM policy + provider aliases \u2014 out of scope). VCN CIDRs must not overlap.",
+        "required": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "connection_ids",
+      "description": "Map of '<peering-key>/a' and '<peering-key>/b' to LPG OCIDs. Use these as route-rule network entities in each VCN's route tables."
+    },
+    {
+      "name": "peering_status",
+      "description": "Map of logical peering name to the side-A peering status (PEERED when established)."
+    },
+    {
+      "name": "peer_advertised_cidrs",
+      "description": "Map of logical peering name to the CIDR advertised by the peer (side A's view)."
+    }
+  ]
+}

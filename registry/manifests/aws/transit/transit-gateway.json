@@ -1,0 +1,155 @@
+{
+  "id": "aws/transit/transit-gateway",
+  "path": "modules/aws/transit/transit-gateway",
+  "cloud": "aws",
+  "domain": "transit",
+  "name": "transit-gateway",
+  "title": "AWS Transit \u2014 Transit Gateway",
+  "summary": "Creates a transit gateway with VPC attachments, custom route tables, explicit associations/propagations for segmented topologies, and static (or blackhole) routes.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "amazon_side_asn",
+        "type": "number",
+        "description": "Private ASN for the Amazon side of BGP sessions (64512-65534 for 16-bit). Must not collide with on-premises or other cloud ASNs in the routing domain.",
+        "required": false,
+        "default": "64512"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "description": "Human-readable description of the transit gateway.",
+        "required": false,
+        "default": "\"Managed by Terraform\""
+      },
+      {
+        "name": "enable_default_route_table_association",
+        "type": "bool",
+        "description": "Automatically associate new attachments with the default TGW route table. Set false for segmented (multi-route-table) topologies.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "enable_default_route_table_propagation",
+        "type": "bool",
+        "description": "Automatically propagate routes from new attachments into the default TGW route table. Set false for segmented topologies.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "enable_dns_support",
+        "type": "bool",
+        "description": "Enable DNS support on the transit gateway.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "enable_vpn_ecmp_support",
+        "type": "bool",
+        "description": "Enable equal-cost multi-path routing across VPN attachments.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "auto_accept_shared_attachments",
+        "type": "bool",
+        "description": "Auto-accept attachment requests from accounts sharing via RAM.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "vpc_attachments",
+        "type": "map(object({ vpc_id = string subnet_ids = list(string) appliance_mode = optional(bool, false) dns_support = optional(bool, true) route_table_key = optional(string) propagate_to = optional(list(string), []) }))",
+        "description": "VPC attachments keyed by logical name. route_table_key associates the attachment with a custom route table defined in route_tables; propagate_to lists route table keys that learn this attachment's routes.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "route_tables",
+        "type": "set(string)",
+        "description": "Logical names of custom TGW route tables to create (e.g., [\\\"prod\\\", \\\"shared\\\", \\\"inspection\\\"]).",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "static_routes",
+        "type": "map(object({ route_table_key = string destination_cidr = string attachment_key = optional(string) blackhole = optional(bool, false) }))",
+        "description": "Static TGW routes keyed by logical name. Point destination_cidr at an attachment or blackhole it.",
+        "required": false,
+        "default": "{}",
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "hub_id",
+      "description": "ID of the transit gateway."
+    },
+    {
+      "name": "hub_arn",
+      "description": "ARN of the transit gateway."
+    },
+    {
+      "name": "attachment_ids",
+      "description": "Map of logical attachment name to TGW VPC attachment ID."
+    },
+    {
+      "name": "route_table_ids",
+      "description": "Map of logical route table name to TGW route table ID, plus 'default' for the TGW default association route table."
+    },
+    {
+      "name": "static_route_ids",
+      "description": "Map of logical static route name to TGW route ID."
+    }
+  ]
+}

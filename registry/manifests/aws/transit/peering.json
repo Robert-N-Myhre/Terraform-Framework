@@ -1,0 +1,83 @@
+{
+  "id": "aws/transit/peering",
+  "path": "modules/aws/transit/peering",
+  "cloud": "aws",
+  "domain": "transit",
+  "name": "peering",
+  "title": "AWS Transit \u2014 VPC Peering",
+  "summary": "Creates VPC peering connections (same-region auto-accept or same-account cross-region), DNS resolution options, and optional route injection on both sides.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "peerings",
+        "type": "map(object({ requester_vpc_id = string accepter_vpc_id = string peer_region = optional(string) auto_accept = optional(bool, true) allow_requester_dns_resolution = optional(bool, true) allow_accepter_dns_resolution = optional(bool, true) requester_route_table_ids = optional(list(string), []) requester_destination_cidr = optional(string) accepter_route_table_ids = optional(list(string), []) accepter_destination_cidr = optional(string) }))",
+        "description": "Map of VPC peering connections keyed by logical name. auto_accept only works for same-account, same-region peering; cross-region peering is accepted by the accepter resource in this module (same account), and cross-account peering requires a provider alias in the consumer root \u2014 out of scope here. Route injection is optional per side.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "connection_ids",
+      "description": "Map of logical peering name to VPC peering connection ID."
+    },
+    {
+      "name": "connection_status",
+      "description": "Map of logical peering name to acceptance status."
+    },
+    {
+      "name": "route_ids",
+      "description": "Map of 'requester|accepter/<peering-key>/<route-table-id>' to route ID."
+    }
+  ]
+}

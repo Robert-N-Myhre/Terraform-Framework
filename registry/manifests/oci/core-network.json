@@ -1,0 +1,164 @@
+{
+  "id": "oci/core-network",
+  "path": "modules/oci/core-network",
+  "cloud": "oci",
+  "domain": "core-network",
+  "name": "core-network",
+  "title": "OCI Core Network",
+  "summary": "Creates a VCN with regional subnets (private by default), per-subnet route tables, optional internet/NAT/service gateways, and per-subnet VCN flow logs via the OCI Logging service.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for all resources. No hardcoded OCIDs \u2014 always supplied by the consumer.",
+        "required": true
+      },
+      {
+        "name": "vcn_cidr_blocks",
+        "type": "list(string)",
+        "description": "IPv4 CIDR blocks for the VCN (e.g., [\\\"10.80.0.0/16\\\"]).",
+        "required": true
+      },
+      {
+        "name": "dns_label",
+        "type": "string",
+        "description": "DNS label for the VCN (alphanumeric, <= 15 chars, immutable). Enables '<subnet>.<vcn>.oraclevcn.com' internal resolution.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "subnets",
+        "type": "map(object({ cidr_block = string prohibit_public_ip_on_vnic = optional(bool, true) dns_label = optional(string) availability_domain = optional(string) route_rules = optional(map(object({ destination = string destination_type = optional(string, \"CIDR_BLOCK\") network_entity_key = optional(string) network_entity_id = optional(string) })), {}) }))",
+        "description": "Map of subnets keyed by logical name. Each subnet gets its own route table built from route_rules; rules target module-managed gateways by keyword (igw/natgw/sgw) or any external entity by OCID. OCI subnets are regional by default (availability_domain = null) \u2014 AD-specific subnets are legacy.",
+        "required": true
+      },
+      {
+        "name": "create_internet_gateway",
+        "type": "bool",
+        "description": "Create an internet gateway (for public subnets).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "create_nat_gateway",
+        "type": "bool",
+        "description": "Create a NAT gateway (for private subnet egress).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "create_service_gateway",
+        "type": "bool",
+        "description": "Create a service gateway (private access to OCI services: Object Storage, etc.).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "enable_flow_logs",
+        "type": "bool",
+        "description": "Enable VCN flow logs (all subnets) into a module-managed log group. Requires flow_log_retention_days.",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "flow_log_retention_days",
+        "type": "number",
+        "description": "Retention in days for the flow-log log group (30-180 per OCI Logging limits).",
+        "required": false,
+        "default": "30"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "network_id",
+      "description": "OCID of the created VCN."
+    },
+    {
+      "name": "network_cidr",
+      "description": "CIDR blocks of the VCN (list \u2014 OCI VCNs support multiple)."
+    },
+    {
+      "name": "subnet_ids",
+      "description": "Map of logical subnet name to subnet OCID."
+    },
+    {
+      "name": "subnet_cidrs",
+      "description": "Map of logical subnet name to CIDR block."
+    },
+    {
+      "name": "route_table_ids",
+      "description": "Map of logical subnet name to its route table OCID."
+    },
+    {
+      "name": "internet_gateway_id",
+      "description": "OCID of the internet gateway, or null when not created."
+    },
+    {
+      "name": "nat_ids",
+      "description": "Map with key 'natgw' to the NAT gateway OCID. Empty when not created."
+    },
+    {
+      "name": "service_gateway_id",
+      "description": "OCID of the service gateway, or null when not created."
+    },
+    {
+      "name": "default_security_list_id",
+      "description": "OCID of the VCN's default security list (consumed by the oci/firewall/security-lists module if desired)."
+    },
+    {
+      "name": "flow_log_id",
+      "description": "Map of logical subnet name to flow-log OCID. Empty when flow logs are disabled."
+    }
+  ]
+}

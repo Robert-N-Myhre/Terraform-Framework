@@ -1,0 +1,127 @@
+{
+  "id": "oci/firewall/network-firewall",
+  "path": "modules/oci/firewall/network-firewall",
+  "cloud": "oci",
+  "domain": "firewall",
+  "name": "network-firewall",
+  "title": "OCI Firewall \u2014 OCI Network Firewall",
+  "summary": "Creates an OCI Network Firewall (Palo Alto-backed) with a policy composed of address lists, service lists, and ALLOW/DROP/REJECT/INSPECT security rules, plus the firewall instance in a dedicated subnet.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the firewall and policy.",
+        "required": true
+      },
+      {
+        "name": "firewall_subnet_id",
+        "type": "string",
+        "description": "OCID of the subnet hosting the firewall endpoint (dedicated subnet recommended). Supplied by OCID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "availability_domain",
+        "type": "string",
+        "description": "Availability domain for the firewall instance. Null lets OCI choose (regional subnet).",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "ipv4_address",
+        "type": "string",
+        "description": "Static private IP for the firewall in its subnet. Null = auto-assigned. Route traffic to this IP (or the auto-assigned one) via VCN route rules.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "address_lists",
+        "type": "map(list(string))",
+        "description": "Named IP address lists (CIDRs) referenced by security rules.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "service_lists",
+        "type": "map(map(object({ protocol = string min_port = number max_port = optional(number) })))",
+        "description": "Named service lists: outer key = service-list name, inner key = service name with protocol and port range.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "security_rules",
+        "type": "map(object({ position_order = number action = string source_address_lists = optional(list(string), []) destination_address_lists = optional(list(string), []) service_lists = optional(list(string), []) }))",
+        "description": "Security rules keyed by logical name, referencing address and service lists by name. Default disposition for unmatched traffic is DROP.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "firewall_ids",
+      "description": "Map with single key 'firewall' to the OCI Network Firewall OCID."
+    },
+    {
+      "name": "firewall_private_ip",
+      "description": "Private IPv4 address of the firewall \u2014 target this in VCN route rules to steer traffic through the firewall."
+    },
+    {
+      "name": "policy_id",
+      "description": "OCID of the network firewall policy."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical rule name to security rule name within the policy (rules are policy-scoped, not standalone OCIDs)."
+    }
+  ]
+}

@@ -1,0 +1,1135 @@
+{
+  "generated_by": "tools/generate-manifests.py",
+  "conventions": {
+    "governance_inputs": [
+      "prefix",
+      "environment",
+      "owner",
+      "cost_center",
+      "additional_tags",
+      "name_suffix"
+    ],
+    "naming_pattern": "{prefix}-{cloud}-{environment}-{resource-type}-{suffix}",
+    "composition_rule": "Modules never reference each other (docs/adr/001). Compose in a root module by wiring one module's outputs into another's inputs, as in examples/.",
+    "interface_contract": "docs/adr/002-convention-based-interface.md"
+  },
+  "module_count": 48,
+  "modules": [
+    {
+      "id": "aws/core-network",
+      "path": "modules/aws/core-network",
+      "cloud": "aws",
+      "domain": "core-network",
+      "title": "AWS Core Network",
+      "summary": "Creates a VPC with subnets, route tables, an optional internet gateway, optional NAT gateways (single or per-AZ), and optional VPC flow logs delivered to a module-managed CloudWatch log group.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "region",
+        "vpc_cidr_block",
+        "subnets"
+      ],
+      "outputs": [
+        "network_id",
+        "network_cidr",
+        "network_arn",
+        "subnet_ids",
+        "subnet_cidrs",
+        "route_table_ids",
+        "internet_gateway_id",
+        "nat_ids",
+        "nat_public_ips",
+        "flow_log_id"
+      ],
+      "manifest": "registry/manifests/aws/core-network.json"
+    },
+    {
+      "id": "aws/dns/private-zones",
+      "path": "modules/aws/dns/private-zones",
+      "cloud": "aws",
+      "domain": "dns",
+      "title": "AWS DNS \u2014 Route 53 Private Hosted Zones",
+      "summary": "Creates Route 53 private hosted zones with inline VPC associations and optional record sets.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "private_zones"
+      ],
+      "outputs": [
+        "zone_ids",
+        "zone_names",
+        "zone_arns",
+        "record_ids"
+      ],
+      "manifest": "registry/manifests/aws/dns/private-zones.json"
+    },
+    {
+      "id": "aws/dns/resolver",
+      "path": "modules/aws/dns/resolver",
+      "cloud": "aws",
+      "domain": "dns",
+      "title": "AWS DNS \u2014 Route 53 Resolver",
+      "summary": "Creates Route 53 Resolver inbound/outbound endpoints, per-domain forwarding (and SYSTEM override) rules with VPC associations, and optional query logging.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [],
+      "outputs": [
+        "inbound_endpoint_id",
+        "inbound_endpoint_ips",
+        "outbound_endpoint_id",
+        "rule_ids",
+        "rule_association_ids",
+        "query_log_config_id"
+      ],
+      "manifest": "registry/manifests/aws/dns/resolver.json"
+    },
+    {
+      "id": "aws/firewall/nacls",
+      "path": "modules/aws/firewall/nacls",
+      "cloud": "aws",
+      "domain": "firewall",
+      "title": "AWS Firewall \u2014 Network ACLs",
+      "summary": "Creates stateless network ACLs with numbered allow/deny rules and optional subnet associations.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "vpc_id",
+        "network_acls"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_arns",
+        "rule_ids",
+        "subnet_association_ids"
+      ],
+      "manifest": "registry/manifests/aws/firewall/nacls.json"
+    },
+    {
+      "id": "aws/firewall/network-firewall",
+      "path": "modules/aws/firewall/network-firewall",
+      "cloud": "aws",
+      "domain": "firewall",
+      "title": "AWS Firewall \u2014 AWS Network Firewall",
+      "summary": "Creates an AWS Network Firewall with stateless and stateful (Suricata-compatible, STRICT_ORDER) rule groups, a firewall policy, endpoint placement across dedicated subnets, optional CloudWatch logging, and deletion protection on by default.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "vpc_id",
+        "firewall_subnet_ids"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_policy_arn",
+        "rule_ids",
+        "endpoint_ids",
+        "log_group_names"
+      ],
+      "manifest": "registry/manifests/aws/firewall/network-firewall.json"
+    },
+    {
+      "id": "aws/firewall/security-groups",
+      "path": "modules/aws/firewall/security-groups",
+      "cloud": "aws",
+      "domain": "firewall",
+      "title": "AWS Firewall \u2014 Security Groups",
+      "summary": "Creates a set of stateful security groups with ingress/egress rules, including SG-to-SG references between groups defined in the same invocation.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "vpc_id",
+        "security_groups"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_arns",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/aws/firewall/security-groups.json"
+    },
+    {
+      "id": "aws/hybrid-connectivity/direct-connect",
+      "path": "modules/aws/hybrid-connectivity/direct-connect",
+      "cloud": "aws",
+      "domain": "hybrid-connectivity",
+      "title": "AWS Hybrid Connectivity \u2014 Direct Connect",
+      "summary": "Creates a Direct Connect gateway, optional dedicated connection order, private virtual interfaces, and VGW/TGW gateway associations with on-premises prefix filtering.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [],
+      "outputs": [
+        "gateway_id",
+        "connection_ids",
+        "vif_ids",
+        "association_ids",
+        "vif_bgp_auth_keys"
+      ],
+      "manifest": "registry/manifests/aws/hybrid-connectivity/direct-connect.json"
+    },
+    {
+      "id": "aws/hybrid-connectivity/vpn",
+      "path": "modules/aws/hybrid-connectivity/vpn",
+      "cloud": "aws",
+      "domain": "hybrid-connectivity",
+      "title": "AWS Hybrid Connectivity \u2014 Site-to-Site VPN",
+      "summary": "Creates customer gateways and site-to-site VPN connections terminating on either a module-managed virtual private gateway (`attachment_type = \"vgw\"`) or an existing transit gateway (`attachment_type = \"tgw\"`). Supports BGP (preferred) or static routing, custom tunnel inside CIDRs, IKEv2, and VGW route propagation.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "customer_gateways",
+        "vpn_connections"
+      ],
+      "outputs": [
+        "gateway_id",
+        "customer_gateway_ids",
+        "connection_ids",
+        "tunnel_addresses",
+        "tunnel_preshared_keys"
+      ],
+      "manifest": "registry/manifests/aws/hybrid-connectivity/vpn.json"
+    },
+    {
+      "id": "aws/load-balancer/alb",
+      "path": "modules/aws/load-balancer/alb",
+      "cloud": "aws",
+      "domain": "load-balancer",
+      "title": "AWS Load Balancer \u2014 Application Load Balancer",
+      "summary": "Creates an ALB with target groups, HTTP/HTTPS listeners (TLS 1.3 policy by default), path/host routing rules, optional access logs, and deletion protection on by default. Target registration is the consumer's responsibility (ASG/ECS attachment or `aws_lb_target_group_attachment` in the root module).",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "vpc_id",
+        "subnet_ids",
+        "security_group_ids",
+        "target_groups",
+        "listeners"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_dns_name",
+        "lb_zone_id",
+        "listener_ids",
+        "backend_ids",
+        "listener_rule_ids"
+      ],
+      "manifest": "registry/manifests/aws/load-balancer/alb.json"
+    },
+    {
+      "id": "aws/load-balancer/nlb",
+      "path": "modules/aws/load-balancer/nlb",
+      "cloud": "aws",
+      "domain": "load-balancer",
+      "title": "AWS Load Balancer \u2014 Network Load Balancer",
+      "summary": "Creates an L4 NLB with TCP/UDP/TLS listeners, target groups (instance/ip/alb), cross- zone load balancing, and deletion protection on by default. Target registration is the consumer's responsibility.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "vpc_id",
+        "subnet_ids",
+        "target_groups",
+        "listeners"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_dns_name",
+        "lb_zone_id",
+        "listener_ids",
+        "backend_ids"
+      ],
+      "manifest": "registry/manifests/aws/load-balancer/nlb.json"
+    },
+    {
+      "id": "aws/transit/peering",
+      "path": "modules/aws/transit/peering",
+      "cloud": "aws",
+      "domain": "transit",
+      "title": "AWS Transit \u2014 VPC Peering",
+      "summary": "Creates VPC peering connections (same-region auto-accept or same-account cross-region), DNS resolution options, and optional route injection on both sides.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [
+        "peerings"
+      ],
+      "outputs": [
+        "connection_ids",
+        "connection_status",
+        "route_ids"
+      ],
+      "manifest": "registry/manifests/aws/transit/peering.json"
+    },
+    {
+      "id": "aws/transit/transit-gateway",
+      "path": "modules/aws/transit/transit-gateway",
+      "cloud": "aws",
+      "domain": "transit",
+      "title": "AWS Transit \u2014 Transit Gateway",
+      "summary": "Creates a transit gateway with VPC attachments, custom route tables, explicit associations/propagations for segmented topologies, and static (or blackhole) routes.",
+      "providers": {
+        "aws": "~> 5.0"
+      },
+      "required_inputs": [],
+      "outputs": [
+        "hub_id",
+        "hub_arn",
+        "attachment_ids",
+        "route_table_ids",
+        "static_route_ids"
+      ],
+      "manifest": "registry/manifests/aws/transit/transit-gateway.json"
+    },
+    {
+      "id": "azure/core-network",
+      "path": "modules/azure/core-network",
+      "cloud": "azure",
+      "domain": "core-network",
+      "title": "Azure Core Network",
+      "summary": "Creates a virtual network with standalone subnets (service endpoints, delegations), per-subnet route tables with UDRs, an optional NAT gateway, optional Network Watcher flow logs, and a CanNotDelete management lock on the VNet (on by default).",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "address_space",
+        "subnets"
+      ],
+      "outputs": [
+        "network_id",
+        "network_name",
+        "network_cidr",
+        "subnet_ids",
+        "subnet_cidrs",
+        "route_table_ids",
+        "nat_ids",
+        "nat_public_ips",
+        "flow_log_id"
+      ],
+      "manifest": "registry/manifests/azure/core-network.json"
+    },
+    {
+      "id": "azure/dns/private-zones",
+      "path": "modules/azure/dns/private-zones",
+      "cloud": "azure",
+      "domain": "dns",
+      "title": "Azure DNS \u2014 Private DNS Zones",
+      "summary": "Creates private DNS zones with virtual network links (optional VM auto-registration) and A/CNAME/TXT record sets.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "private_zones"
+      ],
+      "outputs": [
+        "zone_ids",
+        "zone_names",
+        "vnet_link_ids",
+        "record_ids"
+      ],
+      "manifest": "registry/manifests/azure/dns/private-zones.json"
+    },
+    {
+      "id": "azure/dns/resolver",
+      "path": "modules/azure/dns/resolver",
+      "cloud": "azure",
+      "domain": "dns",
+      "title": "Azure DNS \u2014 DNS Private Resolver",
+      "summary": "Creates a DNS Private Resolver with inbound endpoints (on-prem \u2192 Azure resolution), outbound endpoints, forwarding rulesets with per-domain rules, and ruleset VNet links.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "vnet_id"
+      ],
+      "outputs": [
+        "resolver_id",
+        "inbound_endpoint_ids",
+        "inbound_endpoint_ips",
+        "outbound_endpoint_id",
+        "ruleset_ids",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/azure/dns/resolver.json"
+    },
+    {
+      "id": "azure/firewall/asgs",
+      "path": "modules/azure/firewall/asgs",
+      "cloud": "azure",
+      "domain": "firewall",
+      "title": "Azure Firewall \u2014 Application Security Groups",
+      "summary": "Creates application security groups \u2014 workload-identity handles referenced by NSG rules. NIC membership and NSG rule wiring happen outside this module: associate NICs where the workloads are managed, and pass the ASG IDs output here into `azure/firewall/nsgs` rules.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "application_security_groups"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "asg_names"
+      ],
+      "manifest": "registry/manifests/azure/firewall/asgs.json"
+    },
+    {
+      "id": "azure/firewall/azure-firewall",
+      "path": "modules/azure/firewall/azure-firewall",
+      "cloud": "azure",
+      "domain": "firewall",
+      "title": "Azure Firewall \u2014 Managed Appliance",
+      "summary": "Creates an Azure Firewall (Standard or Premium) with a firewall policy, one rule collection group carrying network/application/DNAT collections, a Standard public IP, optional zone deployment, and a CanNotDelete management lock (on by default).",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "firewall_subnet_id"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_private_ip",
+        "firewall_public_ip",
+        "policy_id",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/azure/firewall/azure-firewall.json"
+    },
+    {
+      "id": "azure/firewall/nsgs",
+      "path": "modules/azure/firewall/nsgs",
+      "cloud": "azure",
+      "domain": "firewall",
+      "title": "Azure Firewall \u2014 Network Security Groups",
+      "summary": "Creates NSGs with prioritized allow/deny rules (CIDRs, service tags, or ASG references) and optional subnet associations.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "network_security_groups"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_names",
+        "rule_ids",
+        "subnet_association_ids"
+      ],
+      "manifest": "registry/manifests/azure/firewall/nsgs.json"
+    },
+    {
+      "id": "azure/hybrid-connectivity/expressroute",
+      "path": "modules/azure/hybrid-connectivity/expressroute",
+      "cloud": "azure",
+      "domain": "hybrid-connectivity",
+      "title": "Azure Hybrid Connectivity \u2014 ExpressRoute",
+      "summary": "Creates an ExpressRoute circuit, optional Azure private peering (dual /30 BGP sessions), an optional ExpressRoute gateway in one of two modes, and the gateway-to-circuit connection (gated until the provider provisions the circuit). CanNotDelete lock on the circuit by default.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "service_provider_name",
+        "peering_location"
+      ],
+      "outputs": [
+        "circuit_id",
+        "service_key",
+        "service_provider_provisioning_state",
+        "gateway_id",
+        "connection_ids",
+        "private_peering_id"
+      ],
+      "manifest": "registry/manifests/azure/hybrid-connectivity/expressroute.json"
+    },
+    {
+      "id": "azure/hybrid-connectivity/vpn",
+      "path": "modules/azure/hybrid-connectivity/vpn",
+      "cloud": "azure",
+      "domain": "hybrid-connectivity",
+      "title": "Azure Hybrid Connectivity \u2014 VPN Gateway",
+      "summary": "Creates site-to-site VPN connectivity in one of two modes:",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "local_network_gateways",
+        "connections"
+      ],
+      "outputs": [
+        "gateway_id",
+        "gateway_public_ips",
+        "local_gateway_ids",
+        "vpn_site_ids",
+        "connection_ids",
+        "bgp_peering_address"
+      ],
+      "manifest": "registry/manifests/azure/hybrid-connectivity/vpn.json"
+    },
+    {
+      "id": "azure/load-balancer/application-gateway",
+      "path": "modules/azure/load-balancer/application-gateway",
+      "cloud": "azure",
+      "domain": "load-balancer",
+      "title": "Azure Load Balancer \u2014 Application Gateway v2",
+      "summary": "Creates an Application Gateway (Standard_v2 or WAF_v2) with autoscaling, zone deployment, Key Vault-sourced SSL certificates via managed identity, custom probes, HTTP(S) listeners, and basic routing rules.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "gateway_subnet_id",
+        "backend_pools",
+        "backend_http_settings",
+        "http_listeners",
+        "request_routing_rules"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids",
+        "backend_address_pool_resource_ids"
+      ],
+      "manifest": "registry/manifests/azure/load-balancer/application-gateway.json"
+    },
+    {
+      "id": "azure/load-balancer/load-balancer",
+      "path": "modules/azure/load-balancer/load-balancer",
+      "cloud": "azure",
+      "domain": "load-balancer",
+      "title": "Azure Load Balancer \u2014 Standard Load Balancer",
+      "summary": "Creates a Standard SKU L4 load balancer (public or internal frontend), backend address pools, health probes, load-balancing rules, and explicit outbound SNAT rules. Backend pool membership is the consumer's responsibility (NIC association or address-based).",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "backend_pools"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids",
+        "probe_ids"
+      ],
+      "manifest": "registry/manifests/azure/load-balancer/load-balancer.json"
+    },
+    {
+      "id": "azure/transit/peering",
+      "path": "modules/azure/transit/peering",
+      "cloud": "azure",
+      "domain": "transit",
+      "title": "Azure Transit \u2014 VNet Peering",
+      "summary": "Creates bidirectional VNet peering (two one-way resources per pair) with gateway transit and forwarded-traffic options.",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "peerings"
+      ],
+      "outputs": [
+        "connection_ids"
+      ],
+      "manifest": "registry/manifests/azure/transit/peering.json"
+    },
+    {
+      "id": "azure/transit/vwan",
+      "path": "modules/azure/transit/vwan",
+      "cloud": "azure",
+      "domain": "transit",
+      "title": "Azure Transit \u2014 Virtual WAN",
+      "summary": "Creates a Virtual WAN with one or more virtual hubs (per region), VNet-to-hub connections with full routing configuration (association, propagation including propagate-to-none isolation, static next-hop-IP routes), custom hub route tables, static hub routes (custom **or default** route table), hub-router BGP peerings with NVAs in connected VNets, and a CanNotDelete management lock (on by default).",
+      "providers": {
+        "azurerm": "~> 3.80"
+      },
+      "required_inputs": [
+        "resource_group_name",
+        "location",
+        "hubs"
+      ],
+      "outputs": [
+        "wan_id",
+        "hub_id",
+        "hub_default_route_table_ids",
+        "route_table_ids",
+        "attachment_ids",
+        "hub_route_ids",
+        "bgp_connection_ids"
+      ],
+      "manifest": "registry/manifests/azure/transit/vwan.json"
+    },
+    {
+      "id": "gcp/core-network",
+      "path": "modules/gcp/core-network",
+      "cloud": "gcp",
+      "domain": "core-network",
+      "title": "GCP Core Network",
+      "summary": "Creates a custom-mode global VPC with regional subnets (secondary ranges for GKE, per-subnet flow logs, Private Google Access), static routes, and optional Cloud NAT (router + NAT).",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "subnets"
+      ],
+      "outputs": [
+        "network_id",
+        "network_name",
+        "network_self_link",
+        "network_cidr",
+        "subnet_ids",
+        "subnet_self_links",
+        "subnet_cidrs",
+        "route_ids",
+        "nat_ids",
+        "flow_log_id"
+      ],
+      "manifest": "registry/manifests/gcp/core-network.json"
+    },
+    {
+      "id": "gcp/dns/dns-policy",
+      "path": "modules/gcp/dns/dns-policy",
+      "cloud": "gcp",
+      "domain": "dns",
+      "title": "GCP DNS \u2014 DNS Server Policy",
+      "summary": "Creates a DNS server policy attached to one or more VPC networks: inbound forwarding (on-premises \u2192 Cloud DNS resolution), query logging, and optional network-wide alternative name servers.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "network_self_links"
+      ],
+      "outputs": [
+        "policy_id",
+        "inbound_forwarding_enabled"
+      ],
+      "manifest": "registry/manifests/gcp/dns/dns-policy.json"
+    },
+    {
+      "id": "gcp/dns/private-zones",
+      "path": "modules/gcp/dns/private-zones",
+      "cloud": "gcp",
+      "domain": "dns",
+      "title": "GCP DNS \u2014 Private Managed Zones",
+      "summary": "Creates private Cloud DNS managed zones \u2014 plain (with record sets), forwarding (queries delegated to target name servers), or peering (namespace delegated to another VPC) \u2014 with VPC visibility lists and labels.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "private_zones"
+      ],
+      "outputs": [
+        "zone_ids",
+        "zone_names",
+        "zone_resource_names",
+        "record_ids"
+      ],
+      "manifest": "registry/manifests/gcp/dns/private-zones.json"
+    },
+    {
+      "id": "gcp/firewall/cloud-armor",
+      "path": "modules/gcp/firewall/cloud-armor",
+      "cloud": "gcp",
+      "domain": "firewall",
+      "title": "GCP Firewall \u2014 Cloud Armor",
+      "summary": "Creates a Cloud Armor security policy with IP-range and CEL/preconfigured-WAF rules (SQLi/XSS/etc), rate limiting and throttling, preview (log-only) mode, optional Adaptive Protection, and a configurable default rule.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "rules"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "policy_self_link",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/gcp/firewall/cloud-armor.json"
+    },
+    {
+      "id": "gcp/firewall/hierarchical-firewall",
+      "path": "modules/gcp/firewall/hierarchical-firewall",
+      "cloud": "gcp",
+      "domain": "firewall",
+      "title": "GCP Firewall \u2014 Hierarchical Firewall Policy",
+      "summary": "Creates an organization/folder-level firewall policy with prioritized rules (allow/deny/goto_next) and associations to org or folder nodes. Rules cascade to every project beneath the attached node and evaluate **before** VPC-level rules.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "parent_node",
+        "rules"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "rule_ids",
+        "association_ids"
+      ],
+      "manifest": "registry/manifests/gcp/firewall/hierarchical-firewall.json"
+    },
+    {
+      "id": "gcp/firewall/vpc-firewall-rules",
+      "path": "modules/gcp/firewall/vpc-firewall-rules",
+      "cloud": "gcp",
+      "domain": "firewall",
+      "title": "GCP Firewall \u2014 VPC Firewall Rules",
+      "summary": "Creates classic (network-global, stateful) VPC firewall rules with tag or service-account targeting, allow/deny actions, priorities, and optional logging.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "network_name",
+        "rules"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "rule_ids",
+        "rule_self_links"
+      ],
+      "manifest": "registry/manifests/gcp/firewall/vpc-firewall-rules.json"
+    },
+    {
+      "id": "gcp/hybrid-connectivity/cloud-interconnect",
+      "path": "modules/gcp/hybrid-connectivity/cloud-interconnect",
+      "cloud": "gcp",
+      "domain": "hybrid-connectivity",
+      "title": "GCP Hybrid Connectivity \u2014 Cloud Interconnect",
+      "summary": "Creates a Cloud Router and Interconnect VLAN attachments \u2014 PARTNER (pairing key handed to a service provider, who establishes BGP) or DEDICATED (bound to a physical interconnect with a module-managed BGP session).",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "region",
+        "network_self_link",
+        "attachments"
+      ],
+      "outputs": [
+        "gateway_id",
+        "connection_ids",
+        "attachment_self_links",
+        "pairing_keys",
+        "cloud_router_ip_addresses"
+      ],
+      "manifest": "registry/manifests/gcp/hybrid-connectivity/cloud-interconnect.json"
+    },
+    {
+      "id": "gcp/hybrid-connectivity/cloud-vpn",
+      "path": "modules/gcp/hybrid-connectivity/cloud-vpn",
+      "cloud": "gcp",
+      "domain": "hybrid-connectivity",
+      "title": "GCP Hybrid Connectivity \u2014 HA Cloud VPN",
+      "summary": "Creates an HA VPN gateway (two interfaces), a Cloud Router, external peer gateways (one- or two-interface), and IPsec tunnels each with a BGP session (router interface + peer).",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "region",
+        "network_self_link",
+        "peer_gateways",
+        "tunnels"
+      ],
+      "outputs": [
+        "gateway_id",
+        "gateway_interface_ips",
+        "router_id",
+        "connection_ids",
+        "tunnel_self_links",
+        "bgp_peer_ids"
+      ],
+      "manifest": "registry/manifests/gcp/hybrid-connectivity/cloud-vpn.json"
+    },
+    {
+      "id": "gcp/load-balancer/external",
+      "path": "modules/gcp/load-balancer/external",
+      "cloud": "gcp",
+      "domain": "load-balancer",
+      "title": "GCP Load Balancer \u2014 Global External HTTP(S) LB",
+      "summary": "Creates the full global external L7 chain: global static IP \u2192 HTTP/HTTPS forwarding rules \u2192 target proxies \u2192 URL map (host/path routing) \u2192 backend services (with CDN and Cloud Armor attachment) \u2192 health checks, plus an optional Google-managed SSL certificate.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "backend_services",
+        "default_backend_service_key"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids",
+        "managed_certificate_id"
+      ],
+      "manifest": "registry/manifests/gcp/load-balancer/external.json"
+    },
+    {
+      "id": "gcp/load-balancer/internal",
+      "path": "modules/gcp/load-balancer/internal",
+      "cloud": "gcp",
+      "domain": "load-balancer",
+      "title": "GCP Load Balancer \u2014 Internal Passthrough Network LB",
+      "summary": "Creates an internal L4 passthrough load balancer: regional health check, region backend service (INTERNAL scheme), and forwarding rule with optional static IP, all-ports mode, and global access.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id",
+        "region",
+        "network_self_link",
+        "subnet_self_link",
+        "backend_groups",
+        "health_check"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids",
+        "health_check_id"
+      ],
+      "manifest": "registry/manifests/gcp/load-balancer/internal.json"
+    },
+    {
+      "id": "gcp/transit/network-connectivity-center",
+      "path": "modules/gcp/transit/network-connectivity-center",
+      "cloud": "gcp",
+      "domain": "transit",
+      "title": "GCP Transit \u2014 Network Connectivity Center",
+      "summary": "Creates an NCC hub with VPC-network spokes (full-mesh inter-VPC reachability) and hybrid spokes (HA VPN tunnels / Interconnect VLAN attachments, optional branch-to-branch transfer over Google's backbone).",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "project_id"
+      ],
+      "outputs": [
+        "hub_id",
+        "attachment_ids",
+        "vpc_spoke_ids",
+        "hybrid_spoke_ids"
+      ],
+      "manifest": "registry/manifests/gcp/transit/network-connectivity-center.json"
+    },
+    {
+      "id": "gcp/transit/peering",
+      "path": "modules/gcp/transit/peering",
+      "cloud": "gcp",
+      "domain": "transit",
+      "title": "GCP Transit \u2014 VPC Network Peering",
+      "summary": "Creates both sides of VPC network peering pairs with custom-route export/import control.",
+      "providers": {
+        "google": "~> 5.0"
+      },
+      "required_inputs": [
+        "peerings"
+      ],
+      "outputs": [
+        "connection_ids",
+        "connection_states"
+      ],
+      "manifest": "registry/manifests/gcp/transit/peering.json"
+    },
+    {
+      "id": "oci/core-network",
+      "path": "modules/oci/core-network",
+      "cloud": "oci",
+      "domain": "core-network",
+      "title": "OCI Core Network",
+      "summary": "Creates a VCN with regional subnets (private by default), per-subnet route tables, optional internet/NAT/service gateways, and per-subnet VCN flow logs via the OCI Logging service.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "vcn_cidr_blocks",
+        "subnets"
+      ],
+      "outputs": [
+        "network_id",
+        "network_cidr",
+        "subnet_ids",
+        "subnet_cidrs",
+        "route_table_ids",
+        "internet_gateway_id",
+        "nat_ids",
+        "service_gateway_id",
+        "default_security_list_id",
+        "flow_log_id"
+      ],
+      "manifest": "registry/manifests/oci/core-network.json"
+    },
+    {
+      "id": "oci/dns/private-views",
+      "path": "modules/oci/dns/private-views",
+      "cloud": "oci",
+      "domain": "dns",
+      "title": "OCI DNS \u2014 Private Views",
+      "summary": "Creates private DNS views, each containing private primary zones and record sets (rrsets).",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "views"
+      ],
+      "outputs": [
+        "view_ids",
+        "zone_ids",
+        "zone_names",
+        "record_ids"
+      ],
+      "manifest": "registry/manifests/oci/dns/private-views.json"
+    },
+    {
+      "id": "oci/dns/resolver",
+      "path": "modules/oci/dns/resolver",
+      "cloud": "oci",
+      "domain": "dns",
+      "title": "OCI DNS \u2014 VCN Resolver",
+      "summary": "Manages a VCN's implicit DNS resolver: attached private views, listening (inbound) endpoints, forwarding (outbound) endpoints, and conditional FORWARD rules.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "resolver_id"
+      ],
+      "outputs": [
+        "resolver_id",
+        "inbound_endpoint_ips",
+        "outbound_endpoint_ips",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/oci/dns/resolver.json"
+    },
+    {
+      "id": "oci/firewall/network-firewall",
+      "path": "modules/oci/firewall/network-firewall",
+      "cloud": "oci",
+      "domain": "firewall",
+      "title": "OCI Firewall \u2014 OCI Network Firewall",
+      "summary": "Creates an OCI Network Firewall (Palo Alto-backed) with a policy composed of address lists, service lists, and ALLOW/DROP/REJECT/INSPECT security rules, plus the firewall instance in a dedicated subnet.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "firewall_subnet_id",
+        "security_rules"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "firewall_private_ip",
+        "policy_id",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/oci/firewall/network-firewall.json"
+    },
+    {
+      "id": "oci/firewall/nsgs",
+      "path": "modules/oci/firewall/nsgs",
+      "cloud": "oci",
+      "domain": "firewall",
+      "title": "OCI Firewall \u2014 Network Security Groups",
+      "summary": "Creates VNIC-level NSGs with standalone security rules supporting CIDR, service, and NSG-to-NSG references (within this invocation via `nsg_key`, or external via `external_nsg_id`).",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "vcn_id",
+        "network_security_groups"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/oci/firewall/nsgs.json"
+    },
+    {
+      "id": "oci/firewall/security-lists",
+      "path": "modules/oci/firewall/security-lists",
+      "cloud": "oci",
+      "domain": "firewall",
+      "title": "OCI Firewall \u2014 Security Lists",
+      "summary": "Creates subnet-level security lists with stateful (default) or stateless rules over TCP/UDP/ICMP with port and ICMP-type options.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "vcn_id",
+        "security_lists"
+      ],
+      "outputs": [
+        "firewall_ids",
+        "rule_ids"
+      ],
+      "manifest": "registry/manifests/oci/firewall/security-lists.json"
+    },
+    {
+      "id": "oci/hybrid-connectivity/fastconnect",
+      "path": "modules/oci/hybrid-connectivity/fastconnect",
+      "cloud": "oci",
+      "domain": "hybrid-connectivity",
+      "title": "OCI Hybrid Connectivity \u2014 FastConnect",
+      "summary": "Creates FastConnect virtual circuits \u2014 partner model (`provider_service_id`) or dedicated colocation model (`cross_connect_mappings`) \u2014 terminating PRIVATE circuits on a DRG or advertising `public_prefixes` on PUBLIC circuits.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "drg_id",
+        "virtual_circuits"
+      ],
+      "outputs": [
+        "gateway_id",
+        "connection_ids",
+        "circuit_states",
+        "oracle_bgp_asn"
+      ],
+      "manifest": "registry/manifests/oci/hybrid-connectivity/fastconnect.json"
+    },
+    {
+      "id": "oci/hybrid-connectivity/ipsec-vpn",
+      "path": "modules/oci/hybrid-connectivity/ipsec-vpn",
+      "cloud": "oci",
+      "domain": "hybrid-connectivity",
+      "title": "OCI Hybrid Connectivity \u2014 Site-to-Site IPSec VPN",
+      "summary": "Creates CPE objects and IPSec connections terminating on a DRG, with per-tunnel configuration (BGP or static, PSK, IKE version) via tunnel management.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "drg_id",
+        "customer_premises_equipment",
+        "ipsec_connections"
+      ],
+      "outputs": [
+        "gateway_id",
+        "cpe_ids",
+        "connection_ids",
+        "tunnel_oracle_ips",
+        "tunnel_status"
+      ],
+      "manifest": "registry/manifests/oci/hybrid-connectivity/ipsec-vpn.json"
+    },
+    {
+      "id": "oci/load-balancer/load-balancer",
+      "path": "modules/oci/load-balancer/load-balancer",
+      "cloud": "oci",
+      "domain": "load-balancer",
+      "title": "OCI Load Balancer \u2014 Load Balancer",
+      "summary": "Creates a flexible-shape OCI Load Balancer (public or private) with backend sets, health checkers, optional static backend registration, session persistence, TLS certificates, and HTTP/TCP listeners.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "subnet_ids",
+        "backend_sets",
+        "listeners"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids"
+      ],
+      "manifest": "registry/manifests/oci/load-balancer/load-balancer.json"
+    },
+    {
+      "id": "oci/load-balancer/network-load-balancer",
+      "path": "modules/oci/load-balancer/network-load-balancer",
+      "cloud": "oci",
+      "domain": "load-balancer",
+      "title": "OCI Load Balancer \u2014 Network Load Balancer",
+      "summary": "Creates an L4 passthrough NLB (public or private) with hashing-policy backend sets, TCP/UDP/HTTP(S) health checkers, optional static backend registration (IP or instance OCID), and TCP/UDP listeners. Supports transparent source/destination preservation for firewall-appliance insertion.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "subnet_id",
+        "backend_sets",
+        "listeners"
+      ],
+      "outputs": [
+        "lb_id",
+        "lb_address",
+        "listener_ids",
+        "backend_ids"
+      ],
+      "manifest": "registry/manifests/oci/load-balancer/network-load-balancer.json"
+    },
+    {
+      "id": "oci/transit/drg",
+      "path": "modules/oci/transit/drg",
+      "cloud": "oci",
+      "domain": "transit",
+      "title": "OCI Transit \u2014 Dynamic Routing Gateway",
+      "summary": "Creates an upgraded DRG with custom DRG route tables, VCN attachments, static DRG routes, and cross-region Remote Peering Connections.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id"
+      ],
+      "outputs": [
+        "hub_id",
+        "attachment_ids",
+        "route_table_ids",
+        "rpc_ids"
+      ],
+      "manifest": "registry/manifests/oci/transit/drg.json"
+    },
+    {
+      "id": "oci/transit/lpg",
+      "path": "modules/oci/transit/lpg",
+      "cloud": "oci",
+      "domain": "transit",
+      "title": "OCI Transit \u2014 Local Peering Gateways",
+      "summary": "Creates LPG pairs for same-region VCN peering \u2014 one gateway in each VCN, connected by setting `peer_id` on side A.",
+      "providers": {
+        "oci": "~> 5.0"
+      },
+      "required_inputs": [
+        "compartment_id",
+        "peerings"
+      ],
+      "outputs": [
+        "connection_ids",
+        "peering_status",
+        "peer_advertised_cidrs"
+      ],
+      "manifest": "registry/manifests/oci/transit/lpg.json"
+    }
+  ]
+}

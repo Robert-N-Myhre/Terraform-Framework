@@ -1,0 +1,143 @@
+{
+  "id": "aws/hybrid-connectivity/direct-connect",
+  "path": "modules/aws/hybrid-connectivity/direct-connect",
+  "cloud": "aws",
+  "domain": "hybrid-connectivity",
+  "name": "direct-connect",
+  "title": "AWS Hybrid Connectivity \u2014 Direct Connect",
+  "summary": "Creates a Direct Connect gateway, optional dedicated connection order, private virtual interfaces, and VGW/TGW gateway associations with on-premises prefix filtering.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "create_connection",
+        "type": "bool",
+        "description": "Whether to order a new dedicated DX connection. Set false when using an existing or hosted connection (supply existing_connection_id for private VIFs).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "connection_bandwidth",
+        "type": "string",
+        "description": "Bandwidth for a new dedicated connection (1Gbps, 10Gbps, 100Gbps). Ignored when create_connection = false.",
+        "required": false,
+        "default": "\"1Gbps\""
+      },
+      {
+        "name": "connection_location",
+        "type": "string",
+        "description": "DX location code for a new connection (e.g., 'EqDC2'). Ignored when create_connection = false.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "existing_connection_id",
+        "type": "string",
+        "description": "ID of an existing DX (or hosted) connection to attach private VIFs to. Required when create_connection = false and private_vifs is non-empty.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "dx_gateway_name",
+        "type": "string",
+        "description": "Name override for the Direct Connect gateway. Null derives the name from the framework naming convention.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "dx_gateway_asn",
+        "type": "number",
+        "description": "Amazon-side ASN of the Direct Connect gateway (private range, must differ from on-premises ASN).",
+        "required": false,
+        "default": "64513"
+      },
+      {
+        "name": "private_vifs",
+        "type": "map(object({ vlan = number bgp_asn = number bgp_auth_key = optional(string) amazon_address = optional(string) customer_address = optional(string) mtu = optional(number, 1500) }))",
+        "description": "Private virtual interfaces keyed by logical name, attached to the connection and the DX gateway.",
+        "required": false,
+        "default": "{}",
+        "sensitive": true
+      },
+      {
+        "name": "gateway_associations",
+        "type": "map(object({ type = string gateway_id = string allowed_prefixes = optional(list(string), []) }))",
+        "description": "Associations between the DX gateway and VGWs or transit gateways, keyed by logical name. allowed_prefixes filters which VPC CIDRs are advertised on-premises (required for TGW associations).",
+        "required": false,
+        "default": "{}",
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "gateway_id",
+      "description": "ID of the Direct Connect gateway."
+    },
+    {
+      "name": "connection_ids",
+      "description": "Map with key 'connection' to the DX connection ID in use (newly created or supplied)."
+    },
+    {
+      "name": "vif_ids",
+      "description": "Map of logical private VIF name to virtual interface ID."
+    },
+    {
+      "name": "association_ids",
+      "description": "Map of logical association name to DX gateway association ID."
+    },
+    {
+      "name": "vif_bgp_auth_keys",
+      "description": "Map of logical private VIF name to BGP auth key. SENSITIVE \u2014 required by the on-premises router configuration.",
+      "sensitive": true
+    }
+  ]
+}

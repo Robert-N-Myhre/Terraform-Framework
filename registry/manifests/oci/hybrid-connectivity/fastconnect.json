@@ -1,0 +1,99 @@
+{
+  "id": "oci/hybrid-connectivity/fastconnect",
+  "path": "modules/oci/hybrid-connectivity/fastconnect",
+  "cloud": "oci",
+  "domain": "hybrid-connectivity",
+  "name": "fastconnect",
+  "title": "OCI Hybrid Connectivity \u2014 FastConnect",
+  "summary": "Creates FastConnect virtual circuits \u2014 partner model (`provider_service_id`) or dedicated colocation model (`cross_connect_mappings`) \u2014 terminating PRIVATE circuits on a DRG or advertising `public_prefixes` on PUBLIC circuits.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "oci": {
+      "source": "oracle/oci",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory freeform tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' freeform tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional freeform tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "compartment_id",
+        "type": "string",
+        "description": "OCID of the compartment for the virtual circuits.",
+        "required": true
+      },
+      {
+        "name": "drg_id",
+        "type": "string",
+        "description": "OCID of the DRG terminating private virtual circuits. Supplied by OCID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "virtual_circuits",
+        "type": "map(object({ bandwidth_shape_name = string circuit_type = optional(string, \"PRIVATE\") provider_service_id = optional(string) cross_connect_mappings = optional(map(object({ cross_connect_or_cross_connect_group_id = string vlan = number customer_bgp_peering_ip = optional(string) oracle_bgp_peering_ip = optional(string) })), {}) customer_asn = number public_prefixes = optional(list(string), []) }))",
+        "description": "Virtual circuits keyed by logical name. Use provider_service_id for the partner model (provider completes their side out-of-band) or cross_connect_mappings for the dedicated colocation model. PRIVATE circuits attach to the DRG; PUBLIC circuits advertise public_prefixes.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "gateway_id",
+      "description": "OCID of the DRG terminating private circuits (as supplied)."
+    },
+    {
+      "name": "connection_ids",
+      "description": "Map of logical virtual circuit name to virtual circuit OCID."
+    },
+    {
+      "name": "circuit_states",
+      "description": "Map of logical virtual circuit name to BGP management state and provider state."
+    },
+    {
+      "name": "oracle_bgp_asn",
+      "description": "Map of logical virtual circuit name to the Oracle-side BGP ASN."
+    }
+  ]
+}

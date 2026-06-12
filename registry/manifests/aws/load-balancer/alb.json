@@ -1,0 +1,155 @@
+{
+  "id": "aws/load-balancer/alb",
+  "path": "modules/aws/load-balancer/alb",
+  "cloud": "aws",
+  "domain": "load-balancer",
+  "name": "alb",
+  "title": "AWS Load Balancer \u2014 Application Load Balancer",
+  "summary": "Creates an ALB with target groups, HTTP/HTTPS listeners (TLS 1.3 policy by default), path/host routing rules, optional access logs, and deletion protection on by default. Target registration is the consumer's responsibility (ASG/ECS attachment or `aws_lb_target_group_attachment` in the root module).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "vpc_id",
+        "type": "string",
+        "description": "ID of the VPC hosting the load balancer and target groups. Supplied by ID \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet IDs for the ALB (at least two, in different AZs).",
+        "required": true,
+        "has_validation": true
+      },
+      {
+        "name": "internal",
+        "type": "bool",
+        "description": "Whether the ALB is internal (true) or internet-facing (false).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "security_group_ids",
+        "type": "list(string)",
+        "description": "Security group IDs attached to the ALB.",
+        "required": true
+      },
+      {
+        "name": "enable_deletion_protection",
+        "type": "bool",
+        "description": "Enable deletion protection on the ALB (governance/resource-locks). Must be disabled and applied before destroy.",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "drop_invalid_header_fields",
+        "type": "bool",
+        "description": "Drop HTTP headers with invalid fields (security hardening).",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "idle_timeout",
+        "type": "number",
+        "description": "Connection idle timeout in seconds.",
+        "required": false,
+        "default": "60"
+      },
+      {
+        "name": "access_logs",
+        "type": "object({ enabled = bool bucket = optional(string) prefix = optional(string) })",
+        "description": "ALB access log configuration. When enabled, bucket must be an existing S3 bucket with the proper ELB log-delivery policy.",
+        "required": false,
+        "default": "{ enabled = false }"
+      },
+      {
+        "name": "target_groups",
+        "type": "map(object({ port = number protocol = string target_type = optional(string, \"instance\") deregistration_delay = optional(number, 300) health_check = optional(object({ path = optional(string, \"/\") port = optional(string, \"traffic-port\") protocol = optional(string, \"HTTP\") healthy_threshold = optional(number, 3) unhealthy_threshold = optional(number, 3) timeout = optional(number, 5) interval = optional(number, 30) matcher = optional(string, \"200-299\") }), {}) stickiness = optional(object({ enabled = bool type = optional(string, \"lb_cookie\") cookie_duration = optional(number, 86400) })) }))",
+        "description": "Target groups keyed by logical name. Target registration is the consumer's responsibility (ASG attachment, ECS service, or aws_lb_target_group_attachment in the root module).",
+        "required": true
+      },
+      {
+        "name": "listeners",
+        "type": "map(object({ port = number protocol = string certificate_arn = optional(string) ssl_policy = optional(string, \"ELBSecurityPolicy-TLS13-1-2-2021-06\") default_action = object({ type = string target_group_key = optional(string) redirect = optional(object({ port = optional(string, \"443\") protocol = optional(string, \"HTTPS\") status_code = optional(string, \"HTTP_301\") })) fixed_response = optional(object({ content_type = optional(string, \"text/plain\") message_body = optional(string, \"\") status_code = optional(string, \"404\") })) }) rules = optional(map(object({ priority = number target_group_key = string path_patterns = optional(list(string), []) host_headers = optional(list(string), []) })), {}) }))",
+        "description": "Listeners keyed by logical name with a default action and optional path/host routing rules.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "lb_id",
+      "description": "ARN of the application load balancer."
+    },
+    {
+      "name": "lb_dns_name",
+      "description": "Public or internal DNS name of the ALB."
+    },
+    {
+      "name": "lb_zone_id",
+      "description": "Route 53 hosted zone ID of the ALB (for alias records)."
+    },
+    {
+      "name": "listener_ids",
+      "description": "Map of logical listener name to listener ARN."
+    },
+    {
+      "name": "backend_ids",
+      "description": "Map of logical target group name to target group ARN. Register targets against these in the consumer root module."
+    },
+    {
+      "name": "listener_rule_ids",
+      "description": "Map of '<listener-key>/<rule-key>' to listener rule ARN."
+    }
+  ]
+}

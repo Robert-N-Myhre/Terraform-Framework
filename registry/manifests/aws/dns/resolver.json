@@ -1,0 +1,152 @@
+{
+  "id": "aws/dns/resolver",
+  "path": "modules/aws/dns/resolver",
+  "cloud": "aws",
+  "domain": "dns",
+  "name": "resolver",
+  "title": "AWS DNS \u2014 Route 53 Resolver",
+  "summary": "Creates Route 53 Resolver inbound/outbound endpoints, per-domain forwarding (and SYSTEM override) rules with VPC associations, and optional query logging.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "create_inbound_endpoint",
+        "type": "bool",
+        "description": "Whether to create an inbound resolver endpoint (lets on-premises resolvers query Route 53 private zones).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "inbound_subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet IDs for the inbound endpoint ENIs. At least two subnets in different AZs are required by AWS when the inbound endpoint is created.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "inbound_security_group_ids",
+        "type": "list(string)",
+        "description": "Security group IDs attached to the inbound endpoint ENIs (must allow TCP/UDP 53 from on-premises resolver ranges).",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "create_outbound_endpoint",
+        "type": "bool",
+        "description": "Whether to create an outbound resolver endpoint (forwards queries from the VPC to on-premises or other resolvers).",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "outbound_subnet_ids",
+        "type": "list(string)",
+        "description": "Subnet IDs for the outbound endpoint ENIs. At least two subnets in different AZs are required by AWS when the outbound endpoint is created.",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "outbound_security_group_ids",
+        "type": "list(string)",
+        "description": "Security group IDs attached to the outbound endpoint ENIs (must allow TCP/UDP 53 egress to target resolvers).",
+        "required": false,
+        "default": "[]"
+      },
+      {
+        "name": "forwarding_rules",
+        "type": "map(object({ domain_name = string rule_type = optional(string, \"FORWARD\") target_ips = optional(list(object({ ip = string port = optional(number, 53) })), []) vpc_ids = optional(list(string), []) }))",
+        "description": "Map of resolver rules keyed by logical name. FORWARD rules require target_ips and the outbound endpoint (create_outbound_endpoint = true). SYSTEM rules override a broader FORWARD rule to restore Route 53 resolution for a subdomain. vpc_ids associates each rule with VPCs.",
+        "required": false,
+        "default": "{}",
+        "has_validation": true
+      },
+      {
+        "name": "query_log_destination_arn",
+        "type": "string",
+        "description": "Optional ARN of a CloudWatch log group, S3 bucket, or Kinesis Firehose for resolver query logging. Null disables query logging.",
+        "required": false,
+        "default": "null"
+      },
+      {
+        "name": "query_log_vpc_ids",
+        "type": "list(string)",
+        "description": "VPC IDs to associate with the query logging configuration. Only used when query_log_destination_arn is set.",
+        "required": false,
+        "default": "[]"
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "inbound_endpoint_id",
+      "description": "ID of the inbound resolver endpoint, or null when not created."
+    },
+    {
+      "name": "inbound_endpoint_ips",
+      "description": "IP addresses of the inbound endpoint ENIs (targets for on-premises conditional forwarders). Empty when not created."
+    },
+    {
+      "name": "outbound_endpoint_id",
+      "description": "ID of the outbound resolver endpoint, or null when not created."
+    },
+    {
+      "name": "rule_ids",
+      "description": "Map of logical rule name to resolver rule ID."
+    },
+    {
+      "name": "rule_association_ids",
+      "description": "Map of '<rule-key>/<vpc-id>' to resolver rule association ID."
+    },
+    {
+      "name": "query_log_config_id",
+      "description": "ID of the resolver query log configuration, or null when query logging is disabled."
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "aws/dns/private-zones",
+  "path": "modules/aws/dns/private-zones",
+  "cloud": "aws",
+  "domain": "dns",
+  "name": "private-zones",
+  "title": "AWS DNS \u2014 Route 53 Private Hosted Zones",
+  "summary": "Creates Route 53 private hosted zones with inline VPC associations and optional record sets.",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "aws": {
+      "source": "hashicorp/aws",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory tags.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' tag.",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code for chargeback/showback. Applied as the mandatory 'cost_center' tag.",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional tags merged beneath the mandatory tag set. Mandatory tags win on key collision.",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "private_zones",
+        "type": "map(object({ domain_name = string comment = optional(string, \"Managed by Terraform\") vpc_associations = list(object({ vpc_id = string vpc_region = optional(string) })) records = optional(map(object({ name = string type = string ttl = optional(number, 300) values = list(string) })), {}) }))",
+        "description": "Map of private hosted zones keyed by logical name. Each zone requires at least one VPC association (Route 53 private zones cannot exist without one) and may define a map of records. Cross-account VPC associations are out of scope \u2014 use aws_route53_vpc_association_authorization in the consumer root module for that pattern.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "zone_ids",
+      "description": "Map of logical zone name to Route 53 hosted zone ID."
+    },
+    {
+      "name": "zone_names",
+      "description": "Map of logical zone name to DNS domain name."
+    },
+    {
+      "name": "zone_arns",
+      "description": "Map of logical zone name to hosted zone ARN."
+    },
+    {
+      "name": "record_ids",
+      "description": "Map of '<zone-key>/<record-key>' to record FQDN."
+    }
+  ]
+}

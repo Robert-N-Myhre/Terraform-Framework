@@ -1,0 +1,117 @@
+{
+  "id": "gcp/hybrid-connectivity/cloud-interconnect",
+  "path": "modules/gcp/hybrid-connectivity/cloud-interconnect",
+  "cloud": "gcp",
+  "domain": "hybrid-connectivity",
+  "name": "cloud-interconnect",
+  "title": "GCP Hybrid Connectivity \u2014 Cloud Interconnect",
+  "summary": "Creates a Cloud Router and Interconnect VLAN attachments \u2014 PARTNER (pairing key handed to a service provider, who establishes BGP) or DEDICATED (bound to a physical interconnect with a module-managed BGP session).",
+  "terraform": {
+    "required_version": ">= 1.5.0"
+  },
+  "providers": {
+    "google": {
+      "source": "hashicorp/google",
+      "version": "~> 5.0"
+    }
+  },
+  "inputs": {
+    "governance": [
+      {
+        "name": "prefix",
+        "type": "string",
+        "description": "Short organization or project prefix. First token of every resource name: {prefix}-{cloud}-{environment}-{resource-type}-{suffix}.",
+        "required": true
+      },
+      {
+        "name": "environment",
+        "type": "string",
+        "description": "Deployment environment identifier (e.g., dev, test, prod). Used in resource names and mandatory labels.",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "description": "Team or individual that owns the deployed resources. Applied as the mandatory 'owner' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "cost_center",
+        "type": "string",
+        "description": "Cost center code. Applied as the mandatory 'cost_center' label where supported (lowercased).",
+        "required": true
+      },
+      {
+        "name": "additional_tags",
+        "type": "map(string)",
+        "description": "Optional additional labels merged beneath the mandatory label set (lowercased).",
+        "required": false,
+        "default": "{}"
+      },
+      {
+        "name": "name_suffix",
+        "type": "string",
+        "description": "Final token of every resource name, used to disambiguate multiple instances of this module.",
+        "required": false,
+        "default": "\"01\""
+      }
+    ],
+    "module": [
+      {
+        "name": "project_id",
+        "type": "string",
+        "description": "GCP project ID hosting the attachments.",
+        "required": true
+      },
+      {
+        "name": "region",
+        "type": "string",
+        "description": "Region of the Cloud Router and attachments.",
+        "required": true
+      },
+      {
+        "name": "network_self_link",
+        "type": "string",
+        "description": "Self-link of the VPC network. Supplied as a plain value \u2014 no framework dependency is implied.",
+        "required": true
+      },
+      {
+        "name": "router_asn",
+        "type": "number",
+        "description": "Google-side BGP ASN for the Cloud Router. Partner attachments commonly require 16550.",
+        "required": false,
+        "default": "16550"
+      },
+      {
+        "name": "attachments",
+        "type": "map(object({ type = string edge_availability_domain = optional(string, \"AVAILABILITY_DOMAIN_1\") interconnect_self_link = optional(string) vlan_tag = optional(number) candidate_subnets = optional(list(string), []) bandwidth = optional(string, \"BPS_1G\") admin_enabled = optional(bool, true) bgp = optional(object({ session_range = string peer_ip = string peer_asn = number })) }))",
+        "description": "Interconnect VLAN attachments keyed by logical name. PARTNER attachments output a pairing_key for the service provider and the BGP session is established by the partner. DEDICATED attachments reference a physical interconnect (ordered out-of-band) and define their own BGP session.",
+        "required": true,
+        "has_validation": true
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "name": "gateway_id",
+      "description": "ID of the Cloud Router (the BGP speaker for all attachments)."
+    },
+    {
+      "name": "connection_ids",
+      "description": "Map of logical attachment name to interconnect attachment ID."
+    },
+    {
+      "name": "attachment_self_links",
+      "description": "Map of logical attachment name to self-link (consumable as NCC hybrid-spoke URIs)."
+    },
+    {
+      "name": "pairing_keys",
+      "description": "Map of logical PARTNER attachment name to pairing key \u2014 hand to the service provider. SENSITIVE.",
+      "sensitive": true
+    },
+    {
+      "name": "cloud_router_ip_addresses",
+      "description": "Map of logical attachment name to the Google-side BGP address allocated on the attachment."
+    }
+  ]
+}
