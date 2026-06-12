@@ -149,3 +149,13 @@ module end to end without touching anything else.
 See [CONTRIBUTING.md](CONTRIBUTING.md) — including the hard rules (no
 inter-module sourcing, no inline tags, no hardcoded names/regions/IDs) and the
 interface-contract checklist.
+
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md). Please use GitHub's
+private vulnerability reporting (the repository's **Security** tab) rather than a
+public issue.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
