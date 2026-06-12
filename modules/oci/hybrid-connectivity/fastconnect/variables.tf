@@ -48,7 +48,7 @@ variable "drg_id" {
 
 variable "virtual_circuits" {
   type = map(object({
-    bandwidth_shape_name = string # e.g. "1 Gbps", "10 Gbps" — provider-specific shape names
+    bandwidth_shape_name = string                      # e.g. "1 Gbps", "10 Gbps" — provider-specific shape names
     circuit_type         = optional(string, "PRIVATE") # PRIVATE (to DRG) | PUBLIC
 
     # Partner (provider) model:

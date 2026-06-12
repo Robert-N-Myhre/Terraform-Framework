@@ -69,7 +69,7 @@ variable "outbound_endpoints" {
 
 variable "forwarding_rulesets" {
   type = map(object({
-    outbound_endpoint_keys = list(string) # logical keys from outbound_endpoints
+    outbound_endpoint_keys = list(string)               # logical keys from outbound_endpoints
     vnet_link_ids          = optional(list(string), []) # VNets that consume the ruleset
     rules = optional(map(object({
       domain_name = string # MUST end with a dot, e.g. "corp.example.com."

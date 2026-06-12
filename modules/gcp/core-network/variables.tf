@@ -63,7 +63,7 @@ variable "subnets" {
     ip_cidr_range            = string
     region                   = string
     private_ip_google_access = optional(bool, true)
-    secondary_ip_ranges = optional(map(string), {}) # name -> CIDR (GKE pods/services)
+    secondary_ip_ranges      = optional(map(string), {}) # name -> CIDR (GKE pods/services)
     flow_logs = optional(object({
       enabled              = bool
       aggregation_interval = optional(string, "INTERVAL_5_SEC")
@@ -85,7 +85,7 @@ variable "static_routes" {
     priority         = optional(number, 1000)
     next_hop_gateway = optional(string) # "default-internet-gateway"
     next_hop_ip      = optional(string)
-    next_hop_ilb     = optional(string) # forwarding rule self-link
+    next_hop_ilb     = optional(string)           # forwarding rule self-link
     tags             = optional(list(string), []) # instance tags the route applies to
   }))
   description = "Static routes keyed by logical name. Exactly one next_hop_* must be set per route."

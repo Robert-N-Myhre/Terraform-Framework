@@ -121,9 +121,9 @@ variable "bgp_asn" {
 
 variable "local_network_gateways" {
   type = map(object({
-    gateway_address = string # on-prem device public IP
-    address_space   = optional(list(string), []) # on-prem CIDRs (static routing)
-    bgp_asn         = optional(number)
+    gateway_address     = string                     # on-prem device public IP
+    address_space       = optional(list(string), []) # on-prem CIDRs (static routing)
+    bgp_asn             = optional(number)
     bgp_peering_address = optional(string)
   }))
   description = "On-premises sites keyed by logical name. vnet mode renders these as local network gateways; vhub mode renders the SAME shape as VPN sites (gateway_address -> site link IP, bgp fields -> link BGP)."

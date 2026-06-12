@@ -43,8 +43,8 @@ variable "project_id" {
 
 variable "private_zones" {
   type = map(object({
-    domain_name = string # MUST end with a dot, e.g. "prod.internal.example.com."
-    description = optional(string, "Managed by Terraform")
+    domain_name        = string # MUST end with a dot, e.g. "prod.internal.example.com."
+    description        = optional(string, "Managed by Terraform")
     network_self_links = list(string) # VPCs that can resolve the zone
 
     # Optional: turn the zone into a forwarding zone (queries go to targets)

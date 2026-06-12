@@ -73,9 +73,9 @@ variable "tunnels" {
     ike_version                     = optional(number, 2)
 
     # BGP session for this tunnel
-    bgp_session_range = string # GCP-side /30 link-local, e.g. "169.254.40.1/30"
-    peer_bgp_ip       = string # on-prem side of the /30, e.g. "169.254.40.2"
-    peer_asn          = number
+    bgp_session_range         = string # GCP-side /30 link-local, e.g. "169.254.40.1/30"
+    peer_bgp_ip               = string # on-prem side of the /30, e.g. "169.254.40.2"
+    peer_asn                  = number
     advertised_route_priority = optional(number, 100)
   }))
   description = "HA VPN tunnels keyed by logical name, each with its BGP session. For 99.99% SLA create 2 or 4 tunnels across both gateway interfaces."

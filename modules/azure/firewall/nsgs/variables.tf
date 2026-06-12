@@ -50,17 +50,17 @@ variable "network_security_groups" {
   type = map(object({
     subnet_ids = optional(list(string), []) # subnets to associate
     rules = optional(map(object({
-      priority  = number # 100-4096, unique per NSG+direction
-      direction = string # "Inbound" | "Outbound"
-      access    = string # "Allow" | "Deny"
-      protocol  = string # "Tcp" | "Udp" | "Icmp" | "*"
-      source_port_ranges           = optional(list(string), ["*"])
-      destination_port_ranges      = optional(list(string), ["*"])
-      source_address_prefixes      = optional(list(string)) # CIDRs or service tags
-      destination_address_prefixes = optional(list(string))
+      priority                                   = number # 100-4096, unique per NSG+direction
+      direction                                  = string # "Inbound" | "Outbound"
+      access                                     = string # "Allow" | "Deny"
+      protocol                                   = string # "Tcp" | "Udp" | "Icmp" | "*"
+      source_port_ranges                         = optional(list(string), ["*"])
+      destination_port_ranges                    = optional(list(string), ["*"])
+      source_address_prefixes                    = optional(list(string)) # CIDRs or service tags
+      destination_address_prefixes               = optional(list(string))
       source_application_security_group_ids      = optional(list(string), [])
       destination_application_security_group_ids = optional(list(string), [])
-      description = optional(string)
+      description                                = optional(string)
     })), {})
   }))
   description = <<-EOT

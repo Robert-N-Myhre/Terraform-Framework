@@ -49,9 +49,9 @@ variable "attached_view_ids" {
 
 variable "listening_endpoints" {
   type = map(object({
-    subnet_id          = string
-    listening_address  = optional(string) # null = auto from subnet
-    nsg_ids            = optional(list(string), [])
+    subnet_id         = string
+    listening_address = optional(string) # null = auto from subnet
+    nsg_ids           = optional(list(string), [])
   }))
   description = "Listening endpoints keyed by logical name (on-premises -> VCN resolution; OCI's analogue of an inbound resolver endpoint)."
   default     = {}
@@ -69,9 +69,9 @@ variable "forwarding_endpoints" {
 
 variable "forward_rules" {
   type = map(object({
-    domain_names             = list(string) # e.g. ["corp.example.com"]
-    forwarding_endpoint_key  = string       # logical key from forwarding_endpoints
-    destination_addresses    = list(string) # on-prem DNS server IPs
+    domain_names            = list(string) # e.g. ["corp.example.com"]
+    forwarding_endpoint_key = string       # logical key from forwarding_endpoints
+    destination_addresses   = list(string) # on-prem DNS server IPs
   }))
   description = "Conditional forwarding rules keyed by logical name: matching queries exit via the named forwarding endpoint to the destination addresses."
   default     = {}

@@ -45,10 +45,10 @@ variable "private_zones" {
       vpc_region = optional(string) # defaults to provider region
     }))
     records = optional(map(object({
-      name    = string # relative or FQDN within the zone
-      type    = string # A, AAAA, CNAME, TXT, MX, SRV, PTR, NS
-      ttl     = optional(number, 300)
-      values  = list(string)
+      name   = string # relative or FQDN within the zone
+      type   = string # A, AAAA, CNAME, TXT, MX, SRV, PTR, NS
+      ttl    = optional(number, 300)
+      values = list(string)
     })), {})
   }))
   description = <<-EOT

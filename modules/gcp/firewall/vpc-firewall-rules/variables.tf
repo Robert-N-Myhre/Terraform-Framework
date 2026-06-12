@@ -49,8 +49,8 @@ variable "network_name" {
 variable "rules" {
   type = map(object({
     description = optional(string)
-    direction   = string # "INGRESS" | "EGRESS"
-    action      = string # "allow" | "deny"
+    direction   = string                 # "INGRESS" | "EGRESS"
+    action      = string                 # "allow" | "deny"
     priority    = optional(number, 1000) # lower wins; 0-65535
 
     # Traffic selection — INGRESS uses source_*, EGRESS uses destination_ranges.
@@ -65,7 +65,7 @@ variable "rules" {
 
     # Protocols/ports for the action.
     allow_deny = list(object({
-      protocol = string # "tcp" | "udp" | "icmp" | "esp" | "ah" | "sctp" | "all"
+      protocol = string                     # "tcp" | "udp" | "icmp" | "esp" | "ah" | "sctp" | "all"
       ports    = optional(list(string), []) # ["443", "8000-8100"]
     }))
 

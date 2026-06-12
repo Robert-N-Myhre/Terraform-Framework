@@ -49,8 +49,8 @@ variable "vcn_id" {
 variable "security_lists" {
   type = map(object({
     ingress_rules = optional(map(object({
-      protocol    = string # "6"=TCP, "17"=UDP, "1"=ICMP, "all"
-      source      = string # CIDR or service string
+      protocol    = string                         # "6"=TCP, "17"=UDP, "1"=ICMP, "all"
+      source      = string                         # CIDR or service string
       source_type = optional(string, "CIDR_BLOCK") # CIDR_BLOCK | SERVICE_CIDR_BLOCK
       stateless   = optional(bool, false)
       description = optional(string)

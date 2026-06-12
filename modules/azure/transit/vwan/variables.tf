@@ -59,8 +59,8 @@ variable "wan_type" {
 
 variable "hubs" {
   type = map(object({
-    location       = string
-    address_prefix = string # /23 or larger recommended (e.g., "10.100.0.0/23")
+    location               = string
+    address_prefix         = string                           # /23 or larger recommended (e.g., "10.100.0.0/23")
     hub_routing_preference = optional(string, "ExpressRoute") # ExpressRoute | VpnGateway | ASPath
   }))
   description = "Virtual hubs keyed by logical name, one per region. Address prefix must not overlap any connected VNet or branch."
@@ -123,7 +123,7 @@ variable "hub_routes" {
     route_table_key         = optional(string) # null = the hub's DEFAULT route table
     destinations            = list(string)     # CIDRs
     destinations_type       = optional(string, "CIDR")
-    next_hop_connection_key = string           # logical key in vnet_connections
+    next_hop_connection_key = string # logical key in vnet_connections
   }))
   description = <<-EOT
     Static hub routes keyed by logical name, targeting a custom route table
@@ -139,8 +139,8 @@ variable "hub_routes" {
 variable "bgp_connections" {
   type = map(object({
     hub_key        = string
-    peer_asn       = number # NVA's ASN; must NOT be 65515 (hub router) — eBGP only
-    peer_ip        = string # NVA interface IP in the connected VNet
+    peer_asn       = number           # NVA's ASN; must NOT be 65515 (hub router) — eBGP only
+    peer_ip        = string           # NVA interface IP in the connected VNet
     connection_key = optional(string) # vnet_connections key hosting the NVA
   }))
   description = "Hub router BGP peerings with NVAs in connected VNets (e.g., Palo Alto VM-Series), keyed by logical name. Lets the NVA advertise routes dynamically instead of relying on static hub_routes. Requires a Standard WAN."

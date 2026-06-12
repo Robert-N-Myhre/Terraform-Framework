@@ -79,13 +79,13 @@ variable "backend_sets" {
   type = map(object({
     policy = optional(string, "ROUND_ROBIN") # ROUND_ROBIN | LEAST_CONNECTIONS | IP_HASH
     health_checker = object({
-      protocol          = string # "HTTP" | "TCP"
-      port              = number
-      url_path          = optional(string, "/") # HTTP only
-      return_code       = optional(number, 200) # HTTP only
-      interval_ms       = optional(number, 10000)
-      timeout_ms        = optional(number, 3000)
-      retries           = optional(number, 3)
+      protocol    = string # "HTTP" | "TCP"
+      port        = number
+      url_path    = optional(string, "/") # HTTP only
+      return_code = optional(number, 200) # HTTP only
+      interval_ms = optional(number, 10000)
+      timeout_ms  = optional(number, 3000)
+      retries     = optional(number, 3)
     })
     session_persistence_cookie = optional(string) # cookie name; null = no persistence
     backends = optional(map(object({
@@ -100,11 +100,11 @@ variable "backend_sets" {
 
 variable "listeners" {
   type = map(object({
-    port                  = number
-    protocol              = string # "HTTP" | "HTTP2" | "TCP"
+    port                    = number
+    protocol                = string # "HTTP" | "HTTP2" | "TCP"
     default_backend_set_key = string
-    certificate_name      = optional(string) # from certificates map, enables TLS
-    ssl_verify_peer       = optional(bool, false)
+    certificate_name        = optional(string) # from certificates map, enables TLS
+    ssl_verify_peer         = optional(bool, false)
   }))
   description = "Listeners keyed by logical name, each pointing at a default backend set."
 }

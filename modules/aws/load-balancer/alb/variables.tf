@@ -93,7 +93,7 @@ variable "access_logs" {
 variable "target_groups" {
   type = map(object({
     port                 = number
-    protocol             = string # HTTP | HTTPS
+    protocol             = string                       # HTTP | HTTPS
     target_type          = optional(string, "instance") # instance | ip | lambda | alb
     deregistration_delay = optional(number, 300)
     health_check = optional(object({
@@ -117,12 +117,12 @@ variable "target_groups" {
 
 variable "listeners" {
   type = map(object({
-    port             = number
-    protocol         = string # HTTP | HTTPS
-    certificate_arn  = optional(string) # required for HTTPS
-    ssl_policy       = optional(string, "ELBSecurityPolicy-TLS13-1-2-2021-06")
-    default_action   = object({
-      type             = string # "forward" | "redirect" | "fixed-response"
+    port            = number
+    protocol        = string           # HTTP | HTTPS
+    certificate_arn = optional(string) # required for HTTPS
+    ssl_policy      = optional(string, "ELBSecurityPolicy-TLS13-1-2-2021-06")
+    default_action = object({
+      type             = string           # "forward" | "redirect" | "fixed-response"
       target_group_key = optional(string) # forward: logical key in target_groups
       redirect = optional(object({
         port        = optional(string, "443")

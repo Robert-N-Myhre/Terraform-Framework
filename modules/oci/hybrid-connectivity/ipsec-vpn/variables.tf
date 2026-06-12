@@ -48,7 +48,7 @@ variable "drg_id" {
 
 variable "customer_premises_equipment" {
   type = map(object({
-    ip_address          = string # on-prem device public IP
+    ip_address          = string           # on-prem device public IP
     cpe_device_shape_id = optional(string) # device shape OCID for config helpers
   }))
   description = "CPE objects (on-premises devices) keyed by logical name."
@@ -56,12 +56,12 @@ variable "customer_premises_equipment" {
 
 variable "ipsec_connections" {
   type = map(object({
-    cpe_key        = string
-    static_routes  = optional(list(string), []) # on-prem CIDRs; required for STATIC tunnels, [] for BGP
+    cpe_key       = string
+    static_routes = optional(list(string), []) # on-prem CIDRs; required for STATIC tunnels, [] for BGP
     tunnels = optional(map(object({
-      tunnel_index  = number # 1 or 2
+      tunnel_index  = number                  # 1 or 2
       routing_type  = optional(string, "BGP") # "BGP" | "STATIC"
-      shared_secret = optional(string) # null lets OCI generate
+      shared_secret = optional(string)        # null lets OCI generate
       ike_version   = optional(string, "V2")
       # BGP session (routing_type = "BGP"):
       customer_bgp_asn      = optional(string)

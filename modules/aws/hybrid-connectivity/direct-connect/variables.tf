@@ -74,11 +74,11 @@ variable "dx_gateway_asn" {
 
 variable "private_vifs" {
   type = map(object({
-    vlan           = number
-    bgp_asn        = number # on-premises/customer ASN
-    bgp_auth_key   = optional(string) # sensitive; null lets AWS generate
-    amazon_address   = optional(string) # e.g. "169.254.20.1/30"
-    customer_address = optional(string) # e.g. "169.254.20.2/30"
+    vlan             = number
+    bgp_asn          = number                 # on-premises/customer ASN
+    bgp_auth_key     = optional(string)       # sensitive; null lets AWS generate
+    amazon_address   = optional(string)       # e.g. "169.254.20.1/30"
+    customer_address = optional(string)       # e.g. "169.254.20.2/30"
     mtu              = optional(number, 1500) # 1500 or 9001 (jumbo)
   }))
   description = "Private virtual interfaces keyed by logical name, attached to the connection and the DX gateway."
@@ -88,9 +88,9 @@ variable "private_vifs" {
 
 variable "gateway_associations" {
   type = map(object({
-    type                  = string # "vgw" | "tgw"
-    gateway_id            = string # VGW or TGW ID
-    allowed_prefixes      = optional(list(string), [])
+    type             = string # "vgw" | "tgw"
+    gateway_id       = string # VGW or TGW ID
+    allowed_prefixes = optional(list(string), [])
   }))
   description = "Associations between the DX gateway and VGWs or transit gateways, keyed by logical name. allowed_prefixes filters which VPC CIDRs are advertised on-premises (required for TGW associations)."
   default     = {}

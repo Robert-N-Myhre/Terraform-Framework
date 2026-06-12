@@ -22,10 +22,10 @@ locals {
 resource "azurerm_virtual_network_peering" "a_to_b" {
   for_each = var.peerings
 
-  name                       = "${local.name_base}-peer-${each.key}-ab-${var.name_suffix}"
-  resource_group_name        = each.value.vnet_a_resource_group_name
-  virtual_network_name       = each.value.vnet_a_name
-  remote_virtual_network_id  = each.value.vnet_b_id
+  name                      = "${local.name_base}-peer-${each.key}-ab-${var.name_suffix}"
+  resource_group_name       = each.value.vnet_a_resource_group_name
+  virtual_network_name      = each.value.vnet_a_name
+  remote_virtual_network_id = each.value.vnet_b_id
 
   allow_virtual_network_access = true
   allow_forwarded_traffic      = each.value.a_to_b.allow_forwarded_traffic
@@ -36,10 +36,10 @@ resource "azurerm_virtual_network_peering" "a_to_b" {
 resource "azurerm_virtual_network_peering" "b_to_a" {
   for_each = var.peerings
 
-  name                       = "${local.name_base}-peer-${each.key}-ba-${var.name_suffix}"
-  resource_group_name        = each.value.vnet_b_resource_group_name
-  virtual_network_name       = each.value.vnet_b_name
-  remote_virtual_network_id  = each.value.vnet_a_id
+  name                      = "${local.name_base}-peer-${each.key}-ba-${var.name_suffix}"
+  resource_group_name       = each.value.vnet_b_resource_group_name
+  virtual_network_name      = each.value.vnet_b_name
+  remote_virtual_network_id = each.value.vnet_a_id
 
   allow_virtual_network_access = true
   allow_forwarded_traffic      = each.value.b_to_a.allow_forwarded_traffic

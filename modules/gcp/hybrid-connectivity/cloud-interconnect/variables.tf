@@ -65,10 +65,10 @@ variable "attachments" {
     edge_availability_domain = optional(string, "AVAILABILITY_DOMAIN_1") # PARTNER only
 
     # DEDICATED: reference the physical interconnect + VLAN.
-    interconnect_self_link = optional(string) # DEDICATED only
-    vlan_tag               = optional(number) # DEDICATED only
+    interconnect_self_link = optional(string)           # DEDICATED only
+    vlan_tag               = optional(number)           # DEDICATED only
     candidate_subnets      = optional(list(string), []) # /29 link-local candidates
-    bandwidth              = optional(string, "BPS_1G")  # DEDICATED only
+    bandwidth              = optional(string, "BPS_1G") # DEDICATED only
 
     admin_enabled = optional(bool, true)
 

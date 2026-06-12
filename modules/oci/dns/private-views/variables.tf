@@ -46,10 +46,10 @@ variable "views" {
     zones = optional(map(object({
       domain_name = string # e.g. "prod.internal.example.com"
       records = optional(map(object({
-        name    = string # relative or FQDN within the zone
-        type    = string # A, AAAA, CNAME, TXT, MX, SRV, PTR
-        ttl     = optional(number, 300)
-        rdata   = list(string)
+        name  = string # relative or FQDN within the zone
+        type  = string # A, AAAA, CNAME, TXT, MX, SRV, PTR
+        ttl   = optional(number, 300)
+        rdata = list(string)
       })), {})
     })), {})
   }))

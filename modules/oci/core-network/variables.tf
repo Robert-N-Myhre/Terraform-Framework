@@ -59,10 +59,10 @@ variable "subnets" {
     dns_label                  = optional(string)
     availability_domain        = optional(string) # null = regional subnet (recommended)
     route_rules = optional(map(object({
-      destination       = string # CIDR or service string
-      destination_type  = optional(string, "CIDR_BLOCK") # CIDR_BLOCK | SERVICE_CIDR_BLOCK
-      network_entity_key = optional(string) # "igw" | "natgw" | "sgw" — module-managed gateways
-      network_entity_id  = optional(string) # explicit OCID (DRG, LPG, private IP)
+      destination        = string                         # CIDR or service string
+      destination_type   = optional(string, "CIDR_BLOCK") # CIDR_BLOCK | SERVICE_CIDR_BLOCK
+      network_entity_key = optional(string)               # "igw" | "natgw" | "sgw" — module-managed gateways
+      network_entity_id  = optional(string)               # explicit OCID (DRG, LPG, private IP)
     })), {})
   }))
   description = <<-EOT

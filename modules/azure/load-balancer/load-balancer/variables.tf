@@ -102,7 +102,7 @@ variable "rules" {
     enable_floating_ip      = optional(bool, false)
     idle_timeout_in_minutes = optional(number, 4)
     load_distribution       = optional(string, "Default") # Default | SourceIP | SourceIPProtocol
-    disable_outbound_snat   = optional(bool, true) # prefer explicit outbound rules
+    disable_outbound_snat   = optional(bool, true)        # prefer explicit outbound rules
   }))
   description = "Load balancing rules keyed by logical name, referencing backend pools and probes by logical key."
   default     = {}

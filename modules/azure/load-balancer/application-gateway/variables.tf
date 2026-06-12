@@ -122,10 +122,10 @@ variable "probes" {
 
 variable "http_listeners" {
   type = map(object({
-    frontend_port            = number
-    protocol                 = optional(string, "Http") # Http | Https
-    host_name                = optional(string)
-    ssl_certificate_key      = optional(string) # logical key in ssl_certificates
+    frontend_port       = number
+    protocol            = optional(string, "Http") # Http | Https
+    host_name           = optional(string)
+    ssl_certificate_key = optional(string) # logical key in ssl_certificates
   }))
   description = "HTTP(S) listeners keyed by logical name. HTTPS listeners reference an SSL certificate by logical key."
 

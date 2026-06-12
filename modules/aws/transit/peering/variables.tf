@@ -38,18 +38,18 @@ variable "name_suffix" {
 # ---------------------------------------------------------------------------
 variable "peerings" {
   type = map(object({
-    requester_vpc_id = string
-    accepter_vpc_id  = string
-    peer_region      = optional(string) # set for cross-region peering
-    auto_accept      = optional(bool, true) # same-account, same-region only
+    requester_vpc_id               = string
+    accepter_vpc_id                = string
+    peer_region                    = optional(string)     # set for cross-region peering
+    auto_accept                    = optional(bool, true) # same-account, same-region only
     allow_requester_dns_resolution = optional(bool, true)
     allow_accepter_dns_resolution  = optional(bool, true)
     # Route injection: route table IDs on each side and the CIDR of the
     # opposite VPC. Omit (empty) if the consumer manages routes elsewhere.
-    requester_route_table_ids = optional(list(string), [])
+    requester_route_table_ids  = optional(list(string), [])
     requester_destination_cidr = optional(string)
-    accepter_route_table_ids  = optional(list(string), [])
-    accepter_destination_cidr = optional(string)
+    accepter_route_table_ids   = optional(list(string), [])
+    accepter_destination_cidr  = optional(string)
   }))
   description = <<-EOT
     Map of VPC peering connections keyed by logical name. auto_accept only

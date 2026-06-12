@@ -84,7 +84,7 @@ variable "vpc_attachments" {
     subnet_ids      = list(string)
     appliance_mode  = optional(bool, false)
     dns_support     = optional(bool, true)
-    route_table_key = optional(string) # association target (custom RT key)
+    route_table_key = optional(string)           # association target (custom RT key)
     propagate_to    = optional(list(string), []) # custom RT keys to propagate into
   }))
   description = "VPC attachments keyed by logical name. route_table_key associates the attachment with a custom route table defined in route_tables; propagate_to lists route table keys that learn this attachment's routes."

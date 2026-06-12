@@ -37,15 +37,15 @@ locals {
 resource "oci_dns_resolver_endpoint" "listening" {
   for_each = var.listening_endpoints
 
-  resolver_id        = var.resolver_id
-  name               = "listen-${each.key}"
-  endpoint_type      = "VNIC"
-  scope              = "PRIVATE"
-  is_listening       = true
-  is_forwarding      = false
-  subnet_id          = each.value.subnet_id
-  listening_address  = each.value.listening_address
-  nsg_ids            = each.value.nsg_ids
+  resolver_id       = var.resolver_id
+  name              = "listen-${each.key}"
+  endpoint_type     = "VNIC"
+  scope             = "PRIVATE"
+  is_listening      = true
+  is_forwarding     = false
+  subnet_id         = each.value.subnet_id
+  listening_address = each.value.listening_address
+  nsg_ids           = each.value.nsg_ids
 }
 
 resource "oci_dns_resolver_endpoint" "forwarding" {
@@ -81,10 +81,10 @@ resource "oci_dns_resolver" "this" {
   dynamic "rules" {
     for_each = var.forward_rules
     content {
-      action                = "FORWARD"
+      action                 = "FORWARD"
       qname_cover_conditions = rules.value.domain_names
-      destination_addresses = rules.value.destination_addresses
-      source_endpoint_name  = oci_dns_resolver_endpoint.forwarding[rules.value.forwarding_endpoint_key].name
+      destination_addresses  = rules.value.destination_addresses
+      source_endpoint_name   = oci_dns_resolver_endpoint.forwarding[rules.value.forwarding_endpoint_key].name
     }
   }
 

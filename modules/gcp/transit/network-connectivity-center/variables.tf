@@ -58,8 +58,8 @@ variable "vpc_spokes" {
 
 variable "hybrid_spokes" {
   type = map(object({
-    location                   = string # region of the tunnels/attachments
-    type                       = string # "vpn" | "interconnect"
+    location                   = string       # region of the tunnels/attachments
+    type                       = string       # "vpn" | "interconnect"
     uris                       = list(string) # tunnel or VLAN-attachment self-links
     site_to_site_data_transfer = optional(bool, true)
   }))

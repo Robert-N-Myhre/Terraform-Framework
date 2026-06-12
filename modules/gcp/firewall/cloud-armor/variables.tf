@@ -56,7 +56,7 @@ variable "rules" {
     # Exactly one match style per rule:
     src_ip_ranges = optional(list(string), []) # basic IP match (max 10 ranges/rule)
     expression    = optional(string)           # CEL expression, e.g. preconfigured WAF:
-                                               # "evaluatePreconfiguredWaf('sqli-v33-stable')"
+    # "evaluatePreconfiguredWaf('sqli-v33-stable')"
 
     preview = optional(bool, false) # log-only mode
 

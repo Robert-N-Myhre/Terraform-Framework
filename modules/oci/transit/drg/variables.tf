@@ -52,7 +52,7 @@ variable "vcn_attachments" {
     vcn_id              = string
     drg_route_table_key = optional(string) # custom DRG RT this attachment uses
     # Optional VCN-side route table for advanced/transit routing scenarios:
-    vcn_route_table_id  = optional(string)
+    vcn_route_table_id = optional(string)
   }))
   description = "VCN attachments keyed by logical name. drg_route_table_key assigns a custom DRG route table created by this module."
   default     = {}
@@ -60,8 +60,8 @@ variable "vcn_attachments" {
 
 variable "static_routes" {
   type = map(object({
-    drg_route_table_key = string
-    destination_cidr    = string
+    drg_route_table_key     = string
+    destination_cidr        = string
     next_hop_attachment_key = string # logical key from vcn_attachments
   }))
   description = "Static DRG routes keyed by logical name, pointing a CIDR at a VCN attachment."
@@ -71,7 +71,7 @@ variable "static_routes" {
 variable "remote_peering_connections" {
   type = map(object({
     # Set peer fields on ONE side only; leave null on the accepting side.
-    peer_rpc_id     = optional(string)
+    peer_rpc_id      = optional(string)
     peer_region_name = optional(string)
   }))
   description = "Remote peering connections (cross-region DRG-to-DRG) keyed by logical name. The initiating side sets peer_rpc_id + peer_region_name; the accepting side leaves both null."

@@ -67,8 +67,8 @@ variable "amazon_side_asn" {
 
 variable "customer_gateways" {
   type = map(object({
-    bgp_asn    = number
-    ip_address = string
+    bgp_asn     = number
+    ip_address  = string
     device_name = optional(string)
   }))
   description = "Customer gateways keyed by logical name: on-premises device public IP and BGP ASN (use 65000-range private ASN for static routing)."
@@ -76,11 +76,11 @@ variable "customer_gateways" {
 
 variable "vpn_connections" {
   type = map(object({
-    customer_gateway_key = string
-    static_routes_only   = optional(bool, false)
-    static_routes        = optional(list(string), []) # on-prem CIDRs (vgw + static only)
-    tunnel1_inside_cidr  = optional(string)
-    tunnel2_inside_cidr  = optional(string)
+    customer_gateway_key  = string
+    static_routes_only    = optional(bool, false)
+    static_routes         = optional(list(string), []) # on-prem CIDRs (vgw + static only)
+    tunnel1_inside_cidr   = optional(string)
+    tunnel2_inside_cidr   = optional(string)
     tunnel1_preshared_key = optional(string) # sensitive; null lets AWS generate
     tunnel2_preshared_key = optional(string)
     tunnel_ike_versions   = optional(list(string), ["ikev2"])

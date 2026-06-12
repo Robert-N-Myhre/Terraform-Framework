@@ -66,8 +66,8 @@ variable "nsg_ids" {
 
 variable "backend_sets" {
   type = map(object({
-    policy                  = optional(string, "FIVE_TUPLE") # FIVE_TUPLE | THREE_TUPLE | TWO_TUPLE
-    is_preserve_source      = optional(bool, true)
+    policy             = optional(string, "FIVE_TUPLE") # FIVE_TUPLE | THREE_TUPLE | TWO_TUPLE
+    is_preserve_source = optional(bool, true)
     health_checker = object({
       protocol    = string # "TCP" | "UDP" | "HTTP" | "HTTPS"
       port        = number

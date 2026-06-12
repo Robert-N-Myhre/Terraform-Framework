@@ -128,11 +128,11 @@ variable "nat_rule_collections" {
   type = map(object({
     priority = number
     rules = map(object({
-      protocols           = list(string) # "TCP" | "UDP"
-      source_addresses    = list(string)
-      destination_ports   = list(string)
-      translated_address  = string
-      translated_port     = number
+      protocols          = list(string) # "TCP" | "UDP"
+      source_addresses   = list(string)
+      destination_ports  = list(string)
+      translated_address = string
+      translated_port    = number
     }))
   }))
   description = "DNAT rule collections keyed by logical name. Destination address is always the firewall public IP."

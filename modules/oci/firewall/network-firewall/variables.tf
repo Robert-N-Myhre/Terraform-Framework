@@ -76,11 +76,11 @@ variable "service_lists" {
 
 variable "security_rules" {
   type = map(object({
-    position_order        = number # ordering hint; rules applied in map iteration order via after/before chaining is out of scope
-    action                = string # "ALLOW" | "DROP" | "REJECT" | "INSPECT"
-    source_address_lists  = optional(list(string), []) # names from address_lists; empty = any
+    position_order            = number                     # ordering hint; rules applied in map iteration order via after/before chaining is out of scope
+    action                    = string                     # "ALLOW" | "DROP" | "REJECT" | "INSPECT"
+    source_address_lists      = optional(list(string), []) # names from address_lists; empty = any
     destination_address_lists = optional(list(string), [])
-    service_lists         = optional(list(string), []) # names from service_lists; empty = any
+    service_lists             = optional(list(string), []) # names from service_lists; empty = any
   }))
   description = "Security rules keyed by logical name, referencing address and service lists by name. Default disposition for unmatched traffic is DROP."
 

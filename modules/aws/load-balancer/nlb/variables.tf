@@ -78,7 +78,7 @@ variable "enable_cross_zone_load_balancing" {
 variable "target_groups" {
   type = map(object({
     port                 = number
-    protocol             = string # TCP | UDP | TCP_UDP | TLS
+    protocol             = string                       # TCP | UDP | TCP_UDP | TLS
     target_type          = optional(string, "instance") # instance | ip | alb
     deregistration_delay = optional(number, 300)
     preserve_client_ip   = optional(bool)

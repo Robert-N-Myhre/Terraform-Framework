@@ -43,10 +43,10 @@ variable "project_id" {
 
 variable "backend_services" {
   type = map(object({
-    protocol    = optional(string, "HTTP") # HTTP | HTTPS | HTTP2
-    port_name   = optional(string, "http") # named port on instance groups
-    timeout_sec = optional(number, 30)
-    enable_cdn  = optional(bool, false)
+    protocol           = optional(string, "HTTP") # HTTP | HTTPS | HTTP2
+    port_name          = optional(string, "http") # named port on instance groups
+    timeout_sec        = optional(number, 30)
+    enable_cdn         = optional(bool, false)
     security_policy_id = optional(string) # Cloud Armor policy (gcp/firewall/cloud-armor output)
     groups = map(object({
       group           = string # instance group or NEG self-link
